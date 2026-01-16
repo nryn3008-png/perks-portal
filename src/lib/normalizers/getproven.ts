@@ -61,52 +61,80 @@ function normalizeCategoryFromDeal(category: unknown): { id: string; name: strin
 }
 
 /**
+ * Extract domain from a URL string
+ * Returns null if URL is invalid or domain can't be extracted
+ */
+function extractDomain(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    return parsed.hostname;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Derive favicon URL from a website domain
+ * Uses Google's favicon service as a reliable source
+ * Returns undefined if no valid domain available
+ */
+function deriveFaviconUrl(websiteUrl: string | undefined, redemptionUrl: string | undefined): string | undefined {
+  // Try website URL first, then redemption URL as fallback
+  const domain = extractDomain(websiteUrl) || extractDomain(redemptionUrl);
+  if (!domain) return undefined;
+
+  // Google's favicon service - reliable, fast, and handles missing favicons gracefully
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+}
+
+/**
  * Parse discount/value information into structured format
  */
 function parseValue(deal: GetProvenDeal): PerkValue {
-  const discountValue = sanitizeText(deal.discount_value);
-  const discountType = sanitizeText(deal.discount_type);
+  const estimatedValue = deal.estimated_value;
+  const discountType = deal.discount_type;
+  const discount = deal.discount;
 
-  // Try to extract numeric value
-  const numericMatch = discountValue.match(/[\d,]+/);
-  const amount = numericMatch ? parseInt(numericMatch[0].replace(/,/g, ''), 10) : undefined;
-
-  // Determine value type
-  if (discountValue.includes('%') || discountType?.toLowerCase().includes('percent')) {
+  // Use estimated_value if available
+  if (estimatedValue && estimatedValue > 0) {
     return {
-      type: 'percentage',
-      amount,
-      description: discountValue || 'Discount available',
+      type: 'credits',
+      amount: estimatedValue,
+      currency: 'USD',
+      description: `$${estimatedValue.toLocaleString()} value`,
     };
   }
 
-  if (discountValue.includes('$') || discountValue.toLowerCase().includes('credit')) {
+  // Use discount if available
+  if (discount && discount > 0) {
+    if (discountType === 'percentage') {
+      return {
+        type: 'percentage',
+        amount: discount,
+        description: `${discount}% off`,
+      };
+    }
     return {
       type: 'credits',
-      amount,
+      amount: discount,
       currency: 'USD',
-      description: discountValue || 'Credits available',
+      description: `$${discount.toLocaleString()} discount`,
     };
   }
 
   return {
     type: 'custom',
-    amount,
-    description: discountValue || 'Special offer available',
+    description: 'Special offer available',
   };
 }
 
 /**
  * Determine perk status from deal data
+ * Note: API doesn't provide is_active or expiration_date, assume all listed offers are active
  */
-function parseStatus(deal: GetProvenDeal): PerkStatus {
-  if (!deal.is_active) return 'expired';
-
-  if (deal.expiration_date) {
-    const expirationDate = new Date(deal.expiration_date);
-    if (expirationDate < new Date()) return 'expired';
-  }
-
+function parseStatus(_deal: GetProvenDeal): PerkStatus {
+  // All offers returned by the API are assumed to be active
   return 'active';
 }
 
@@ -114,8 +142,8 @@ function parseStatus(deal: GetProvenDeal): PerkStatus {
  * Determine redemption type from deal data
  */
 function parseRedemptionType(deal: GetProvenDeal): RedemptionType {
-  if (deal.promo_code) return 'code';
-  if (deal.redemption_url) return 'link';
+  // API provides getproven_link for all offers
+  if (deal.getproven_link) return 'link';
   return 'contact';
 }
 
@@ -125,16 +153,139 @@ function parseRedemptionType(deal: GetProvenDeal): RedemptionType {
 function validateDeal(deal: GetProvenDeal): void {
   const missingFields: string[] = [];
 
-  if (!deal.title) missingFields.push('title');
+  if (!deal.name) missingFields.push('name');
   if (!deal.description) missingFields.push('description');
-  if (!deal.company_name) missingFields.push('company_name');
 
   if (missingFields.length > 0) {
     logWarning(`Deal ${deal.id} missing fields: ${missingFields.join(', ')}`, {
       dealId: deal.id,
-      title: deal.title,
+      name: deal.name,
     });
   }
+}
+
+/**
+ * Strip HTML tags from text
+ */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Extract provider/vendor name from offer title (max 2 words)
+ * Uses real API data (name field) since API doesn't provide vendor names
+ * Smart extraction: "Company - Offer" → "Company", or first 2 meaningful words
+ */
+function extractProviderName(offerName: string): string {
+  if (!offerName) return 'Provider';
+
+  // Remove common prefixes like "(Old)", "(New)", "(UK & EU)", etc.
+  let cleanName = offerName.replace(/^\([^)]+\)\s*/, '').trim();
+
+  // Words that are likely NOT provider names (action words, common terms)
+  const badStartWords = new Set([
+    'for', 'the', 'a', 'an', 'and', 'or', 'with', 'to', 'of', 'in', 'on', 'at', 'by',
+    'get', 'free', 'we', 'our', 'your', 'up', 'off', 'rate', 'discount', 'save',
+    'exclusive', 'special', 'limited', 'offer', 'deal', 'promo', 'promotion',
+    'month', 'months', 'year', 'years', 'first', 'new', 'best', 'top', 'premium',
+    'funding', 'preferred', 'procurement', 'business', 'case', 'awesome', 'amazing',
+    'great', 'super', 'credit', 'credits', 'value', 'roadmap', 'development',
+    'approval', 'terms', 'partnership', 'startup', 'startups', 'enterprise',
+    'site', 'selection', 'financial', 'incentive', 'dedicated', 'advisory',
+    'expert', 'portfolio', 'companies', 'overview', 'network', 'driven',
+    'compliance', 'security', 'automation', 'service', 'services', 'solution',
+    'solutions', 'platform', 'program', 'early', 'stage', 'series', 'seed',
+    'expert-driven', 'greater', 'kuala', 'all-in', 'one', 'corporate', 'tax',
+    'exemption', 'personal', 'trial', 'intro', 'welcome', 'hello', 'try',
+    'discounts', 'buy', 'now', 'cap', 'table', 'complimentary', 'cfo',
+    'early-stage', 'international', 'scale', 'engineering', 'legal', 'total',
+    'sourcing', 'strategy', 'sprint', 'sales', 'acceleration', 'revenue',
+    'accounting', 'ad', 'ads', 'accelerator', 'checking', 'savings', 'ai',
+    'bank', 'accounts', 'call', 'center', 'career', 'pathing', 'booster',
+    'programs', 'apply', 'asia', 'coaching', 'session', 'consultation',
+    // Additional common words that appear in perk titles
+    'guarantee', 'expansion', 'packages', 'licenses', 'less', 'three', 'two',
+    'four', 'five', 'six', 'recognition', 'place', 'team', 'teams', 'member',
+    'members', 'community', 'train', 'training', 'learn', 'learning', 'join',
+    'access', 'unlock', 'receive', 'enjoy', 'claim', 'redeem', 'activate',
+    'start', 'begin', 'launch', 'grow', 'build', 'create', 'make', 'take',
+    'plus', 'pro', 'basic', 'standard', 'advanced', 'ultimate', 'starter',
+    'essentials', 'core', 'full', 'complete', 'annual', 'monthly', 'weekly',
+    'than', 'visa', 'visas', 'approval', 'money', 'back', 'perks', 'perk',
+    'any', 'all', 'product', 'global', 'management', 'plan', 'plans',
+    'developer', 'developers', 'digital', 'insurance', 'agreement',
+    'cash', 'approvals', 'income', 'lumpur', 'finance', 'expert-driven',
+    'talent', 'paid', 'equity', 'payroll', 'software', 'accessibility',
+    'hardware', 'cloud', 'data', 'analytics', 'marketing', 'hiring',
+    'from', 'company', 'customized', 'fee', 'fees', 'founders', 'founder',
+    'growth', 'implementation', 'win-loss', 'gkl', 'eor', 'partner',
+    'proven', 'canadian', 'contractor', 'initial', 'interview', 'leading',
+    'lifetime', 'live', 'more', 'office', 'pricing', 'revops', 'setup',
+    'concierge', 'lab', 'tech', 'yearly', 'support', 'o-1a', 'recruitment'
+  ]);
+
+  // Helper: extract first word only, clean punctuation
+  const getFirstWord = (text: string): string => {
+    const word = text.trim().split(/\s+/)[0] || '';
+    return word.replace(/[,.:;!?]+$/, '');
+  };
+
+  // Helper: check if text looks like a valid provider name
+  const isValidProvider = (text: string): boolean => {
+    if (!text || text.length < 3 || text.length > 20) return false;
+    // Must start with a letter
+    if (!/^[a-zA-Z]/.test(text)) return false;
+    // Must not contain special chars at start
+    if (/^[\d$%*&@#]/.test(text)) return false;
+    // Check first word against bad list
+    const firstWord = text.split(/\s+/)[0]?.toLowerCase().replace(/[^a-z]/g, '') || '';
+    if (badStartWords.has(firstWord)) return false;
+    // Must not end with & or other partial words
+    if (/[&]$/.test(text)) return false;
+    return true;
+  };
+
+  // Pattern 1: "Company - Offer" or "Company – Offer"
+  const dashMatch = cleanName.match(/^([^-–]+)\s*[-–]/);
+  if (dashMatch) {
+    const extracted = getFirstWord(dashMatch[1]);
+    if (isValidProvider(extracted)) return extracted;
+  }
+
+  // Pattern 2: "Company: Offer"
+  const colonMatch = cleanName.match(/^([^:]+):/);
+  if (colonMatch) {
+    const extracted = getFirstWord(colonMatch[1]);
+    if (isValidProvider(extracted)) return extracted;
+  }
+
+  // Pattern 3: "X for Startups/Y" - X is often the provider (single word)
+  const forStartupsMatch = cleanName.match(/^(\S+)\s+for\s+(startups?|companies|founders)/i);
+  if (forStartupsMatch) {
+    const extracted = forStartupsMatch[1].replace(/[,.:;!?]+$/, '');
+    if (isValidProvider(extracted)) return extracted;
+  }
+
+  // Pattern 4: Extract first meaningful word (must look like a brand name)
+  const words = cleanName.split(/\s+/);
+
+  for (const word of words) {
+    const cleanWord = word.replace(/[,.:;!?]+$/, '');
+    const wordLower = cleanWord.toLowerCase();
+
+    // Skip bad words, numbers, special chars
+    if (badStartWords.has(wordLower)) continue;
+    if (/^[\d$%&]/.test(cleanWord)) continue;
+    if (cleanWord.length < 2) continue;
+
+    // Found a valid word - validate and return
+    if (isValidProvider(cleanWord)) {
+      return cleanWord;
+    }
+    break; // Only try the first candidate
+  }
+
+  return 'Provider';
 }
 
 /**
@@ -143,42 +294,45 @@ function validateDeal(deal: GetProvenDeal): void {
 export function normalizeDeal(deal: GetProvenDeal): Perk {
   validateDeal(deal);
 
-  const title = sanitizeText(deal.title) || 'Untitled Perk';
-  const slug = generateSlug(title, deal.id);
-  const description = sanitizeText(deal.description);
-  const category = normalizeCategoryFromDeal(deal.category);
+  const title = sanitizeText(deal.name) || 'Untitled Perk';
+  const slug = generateSlug(title, String(deal.id));
+  const rawDescription = deal.description || '';
+  const description = stripHtml(rawDescription);
+  const category = normalizeCategoryFromDeal(
+    deal.offer_categories?.[0] || 'General'
+  );
   const value = parseValue(deal);
   const status = parseStatus(deal);
+
+  // Derive favicon from getproven_link domain
+  const faviconUrl = deriveFaviconUrl(undefined, deal.getproven_link);
 
   return {
     id: String(deal.id),
     title,
     slug,
-    shortDescription: sanitizeText(description, 200),
-    fullDescription: description || 'No description available.',
+    shortDescription: sanitizeText(description, 200) || sanitizeText(title, 200),
+    fullDescription: description || title || 'No description available.',
     category,
     provider: {
-      id: generateSlug(sanitizeText(deal.company_name), 'unknown'),
-      name: sanitizeText(deal.company_name) || 'Unknown Provider',
-      logo: deal.company_logo || undefined,
-      website: undefined, // GetProven may not provide this
+      id: `vendor-${deal.vendor_id}`,
+      name: extractProviderName(deal.name),
+      logo: deal.picture || undefined,
+      faviconUrl,
     },
     value,
     status,
-    createdAt: new Date().toISOString(), // GetProven may not provide this
+    createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     redemption: {
       type: parseRedemptionType(deal),
-      code: deal.promo_code || undefined,
-      url: deal.redemption_url || undefined,
-      instructions: deal.promo_code
-        ? `Use code ${deal.promo_code} at checkout`
-        : deal.redemption_url
-        ? 'Click the button below to redeem'
+      url: deal.getproven_link || undefined,
+      instructions: deal.getproven_link
+        ? 'Click the button below to view offer details on GetProven'
         : 'Contact the provider to redeem',
     },
-    expiresAt: deal.expiration_date || undefined,
-    featured: false, // Will be computed separately
+    expiresAt: undefined,
+    featured: false,
   };
 }
 
@@ -197,6 +351,7 @@ export function normalizeDealToListItem(deal: GetProvenDeal): PerkListItem {
       id: perk.provider.id,
       name: perk.provider.name,
       logo: perk.provider.logo,
+      faviconUrl: perk.provider.faviconUrl,
     },
     value: perk.value,
     status: perk.status,
@@ -217,55 +372,3 @@ export function normalizeCategory(category: GetProvenCategory): PerkCategory {
   };
 }
 
-/**
- * Compute featured perks from a list
- * Logic: Active perks with highest value, prefer cloud/devtools/payments categories
- */
-export function computeFeaturedPerks(perks: PerkListItem[], limit = 4): PerkListItem[] {
-  const priorityCategories = ['cloud', 'infrastructure', 'developer', 'payment', 'finance'];
-
-  return perks
-    .filter((p) => p.status === 'active')
-    .sort((a, b) => {
-      // Prioritize high-value perks
-      const aValue = a.value.amount || 0;
-      const bValue = b.value.amount || 0;
-
-      // Prioritize certain categories
-      const aHasPriority = priorityCategories.some((cat) =>
-        a.category.slug.toLowerCase().includes(cat)
-      );
-      const bHasPriority = priorityCategories.some((cat) =>
-        b.category.slug.toLowerCase().includes(cat)
-      );
-
-      if (aHasPriority && !bHasPriority) return -1;
-      if (!aHasPriority && bHasPriority) return 1;
-
-      return bValue - aValue;
-    })
-    .slice(0, limit)
-    .map((p) => ({ ...p, featured: true }));
-}
-
-/**
- * Compute recommended perks (different from featured)
- * Logic: Active perks, varied categories, not already featured
- */
-export function computeRecommendedPerks(
-  perks: PerkListItem[],
-  featuredIds: Set<string>,
-  limit = 3
-): PerkListItem[] {
-  const seen = new Set<string>();
-
-  return perks
-    .filter((p) => p.status === 'active' && !featuredIds.has(p.id))
-    .filter((p) => {
-      // Ensure category variety
-      if (seen.has(p.category.slug)) return false;
-      seen.add(p.category.slug);
-      return true;
-    })
-    .slice(0, limit);
-}

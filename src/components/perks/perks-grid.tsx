@@ -71,12 +71,12 @@ export function PerksGrid({
 
   return (
     <ul
-      className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid list-none gap-6 p-0 m-0 sm:grid-cols-2 lg:grid-cols-3"
       role="list"
       aria-label="Available perks"
     >
       {perks.map((perk) => (
-        <li key={perk.id}>
+        <li key={perk.id} className="list-none">
           <PerkCard perk={perk} />
         </li>
       ))}

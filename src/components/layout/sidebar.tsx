@@ -3,6 +3,10 @@
 /**
  * Sidebar component
  * Main navigation sidebar for the application
+ *
+ * Branding:
+ * - Bridge logo (primary) - links to https://brdg.app/home/
+ * - Powered by GetProven (attribution) - links to https://getproven.com
  */
 
 import Link from 'next/link';
@@ -18,6 +22,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAVIGATION } from '@/lib/constants';
+
+// External brand URLs
+const BRIDGE_URL = 'https://brdg.app/home/';
+const GETPROVEN_URL = 'https://getproven.com';
 
 // Map icon names to components
 const iconMap: Record<string, React.ElementType> = {
@@ -43,16 +51,23 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white">
-      {/* Logo */}
+      {/* Bridge Logo - Primary Branding */}
       <div className="flex h-16 items-center border-b border-slate-200 px-6">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
-            <Gift className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-lg font-semibold text-slate-900">
-            Perks Portal
-          </span>
-        </Link>
+        <a
+          href={BRIDGE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2.5 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          aria-label="Bridge - Opens in new tab"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logos/bridge-icon.png"
+            alt=""
+            className="h-9 w-9 rounded-lg"
+          />
+          <span className="text-xl font-bold text-slate-900">Bridge</span>
+        </a>
       </div>
 
       {/* Navigation */}
@@ -114,18 +129,40 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         )}
       </nav>
 
-      {/* Portfolio Selector (Bottom) */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 p-4">
-        <button className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:bg-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-brand-600 text-xs font-medium text-white">
-              A
+      {/* Bottom Section */}
+      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
+        {/* Portfolio Selector */}
+        <div className="p-4 pb-3">
+          <button className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:bg-slate-100">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-brand-600 text-xs font-medium text-white">
+                A
+              </div>
+              <span className="font-medium text-slate-700">Acme Ventures</span>
             </div>
-            <span className="font-medium text-slate-700">Acme Ventures</span>
-          </div>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
-        </button>
-        {/* TODO: Implement portfolio/VC selector dropdown */}
+            <ChevronDown className="h-4 w-4 text-slate-400" />
+          </button>
+          {/* TODO: Implement portfolio/VC selector dropdown */}
+        </div>
+
+        {/* Powered by GetProven - Attribution */}
+        <div className="border-t border-slate-100 px-4 py-3">
+          <a
+            href={GETPROVEN_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-md py-1 text-xs text-slate-400 transition-colors hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            aria-label="Powered by GetProven - Opens in new tab"
+          >
+            <span>Powered by</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/getproven-logo.png"
+              alt="GetProven"
+              className="h-3 w-auto"
+            />
+          </a>
+        </div>
       </div>
     </aside>
   );

@@ -10,7 +10,17 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.getproven.com',
       },
-      // TODO: Add other allowed image domains as needed
+      {
+        // Google's favicon service for vendor icons
+        protocol: 'https',
+        hostname: 'www.google.com',
+        pathname: '/s2/favicons**',
+      },
+      {
+        // CloudFront CDN for GetProven media assets
+        protocol: 'https',
+        hostname: '**.cloudfront.net',
+      },
     ],
   },
 

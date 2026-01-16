@@ -115,14 +115,14 @@ export const getProvenClient = {
     options: ApiRequestOptions = {}
   ): Promise<GetProvenListResponse<GetProvenDeal>> {
     const query = buildQueryString(options);
-    return makeRequest<GetProvenListResponse<GetProvenDeal>>(`/deals/${query}`);
+    return makeRequest<GetProvenListResponse<GetProvenDeal>>(`/offers/${query}`);
   },
 
   /**
    * Fetch single deal by ID
    */
   async getDeal(id: string): Promise<GetProvenDeal> {
-    return makeRequest<GetProvenDeal>(`/deals/${id}/`);
+    return makeRequest<GetProvenDeal>(`/offers/${id}/`);
   },
 
   /**
@@ -140,7 +140,7 @@ export const getProvenClient = {
     options: ApiRequestOptions = {}
   ): Promise<GetProvenListResponse<GetProvenDeal>> {
     const query = buildQueryString({ ...options, category: categorySlug });
-    return makeRequest<GetProvenListResponse<GetProvenDeal>>(`/deals/${query}`);
+    return makeRequest<GetProvenListResponse<GetProvenDeal>>(`/offers/${query}`);
   },
 
   // TODO: Add more endpoints as discovered from API documentation

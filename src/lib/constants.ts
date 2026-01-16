@@ -9,7 +9,6 @@ export const NAVIGATION = {
   main: [
     { name: 'Dashboard', href: '/', icon: 'LayoutDashboard' },
     { name: 'All Perks', href: '/perks', icon: 'Gift' },
-    { name: 'Categories', href: '/categories', icon: 'Grid3X3' },
   ],
   admin: [
     { name: 'Manage Perks', href: '/admin/perks', icon: 'Settings' },

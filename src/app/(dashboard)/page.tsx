@@ -5,8 +5,6 @@ import {
   DollarSign,
   Sparkles,
   TrendingUp,
-  Zap,
-  Clock,
   Star,
   AlertCircle,
 } from 'lucide-react';
@@ -20,21 +18,13 @@ import { formatPerkValue } from '@/lib/utils';
  * Founder-first experience with visual hierarchy
  */
 export default async function DashboardPage() {
-  // Fetch all data from real API (with fallback handling in service)
+  // Fetch all data from real API
   const [featuredResult, stats] = await Promise.all([
     perksService.getFeaturedPerks(4),
     perksService.getDashboardStats(),
   ]);
 
   const featuredPerks = featuredResult.success ? featuredResult.data : [];
-  const featuredIds = featuredPerks.map((p) => p.id);
-
-  // Fetch recommended perks (excludes featured)
-  const recommendedResult = await perksService.getRecommendedPerks(featuredIds, 3);
-  const recommendedPerks = recommendedResult.success ? recommendedResult.data : [];
-
-  // Check if we have data to show
-  const hasPerks = featuredPerks.length > 0 || recommendedPerks.length > 0;
 
   return (
     <div className="space-y-10">
@@ -87,7 +77,7 @@ export default async function DashboardPage() {
 
       {/* Stats Cards */}
       <section>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {/* Total Value */}
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-50 to-teal-50">
             <div className="p-6">
@@ -115,22 +105,6 @@ export default async function DashboardPage() {
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10">
                   <Gift className="h-6 w-6 text-blue-600" />
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* New This Month */}
-          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-violet-50 to-purple-50">
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-violet-600">New This Month</p>
-                  <p className="mt-1 text-3xl font-bold text-violet-900">{stats.newThisMonth}</p>
-                  <p className="mt-1 text-sm text-violet-600/70">fresh perks added</p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
-                  <Zap className="h-6 w-6 text-violet-600" />
                 </div>
               </div>
             </div>
@@ -212,102 +186,6 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {/* Recommended For You - Only show if we have recommendations */}
-      {recommendedPerks.length > 0 && (
-        <section className="rounded-2xl bg-slate-50 p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900">Recommended for You</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Based on your company stage and industry
-              </p>
-            </div>
-            <Link href="/perks">
-              <Button variant="outline" size="sm">
-                See more
-                <ArrowRight className="ml-1 h-4 w-4" aria-hidden="true" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {recommendedPerks.map((perk) => (
-              <Link key={perk.id} href={`/perks/${perk.slug}`}>
-                <Card hover className="group transition-all hover:border-brand-200">
-                  <div className="flex items-center gap-4 p-4">
-                    {/* Logo */}
-                    <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 transition-colors group-hover:bg-brand-50">
-                      <span className="text-lg font-semibold text-slate-500 group-hover:text-brand-600">
-                        {perk.provider.name.charAt(0)}
-                      </span>
-                    </div>
-
-                    {/* Content */}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-slate-900 group-hover:text-brand-600">
-                          {perk.title}
-                        </h3>
-                        <Badge variant="default" className="text-xs">
-                          {perk.category.name}
-                        </Badge>
-                      </div>
-                      <p className="mt-0.5 text-sm text-slate-500 line-clamp-1">
-                        {perk.shortDescription}
-                      </p>
-                    </div>
-
-                    {/* Value & Arrow */}
-                    <div className="flex flex-shrink-0 items-center gap-4">
-                      <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700">
-                        {formatPerkValue(perk.value)}
-                      </span>
-                      <ArrowRight className="h-5 w-5 text-slate-300 transition-colors group-hover:text-brand-500" aria-hidden="true" />
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Quick Actions */}
-      <section className="grid gap-4 sm:grid-cols-2">
-        <Card className="border-dashed border-slate-300 bg-transparent p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-              <Clock className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Expiring Soon</h3>
-              <p className="mt-1 text-sm text-slate-500">
-                3 perks are expiring in the next 30 days
-              </p>
-              <Link href="/perks?expiring=true" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
-                View expiring perks →
-              </Link>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="border-dashed border-slate-300 bg-transparent p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100">
-              <Gift className="h-5 w-5 text-brand-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900">Most Popular</h3>
-              <p className="mt-1 text-sm text-slate-500">
-                See what other portfolio founders are redeeming
-              </p>
-              <Link href="/perks?sort=popular" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
-                View popular perks →
-              </Link>
-            </div>
-          </div>
-        </Card>
-      </section>
     </div>
   );
 }

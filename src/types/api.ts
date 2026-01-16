@@ -24,19 +24,24 @@ export type ApiResponse<T> =
  * TODO: Update these based on actual API documentation
  */
 export interface GetProvenDeal {
-  id: string;
-  title: string;
-  description: string;
-  company_name: string;
-  company_logo?: string;
-  category?: string;
-  discount_type?: string;
-  discount_value?: string;
-  redemption_url?: string;
-  promo_code?: string;
-  expiration_date?: string;
-  is_active: boolean;
-  // Add more fields as discovered from API
+  id: number;
+  vendor_id: number;
+  name: string;                    // Offer title/name
+  description: string;             // HTML description
+  picture: string | null;          // Logo/image URL
+  deal_type: string | null;
+  estimated_value_type: string | null;  // "fixed", etc.
+  estimated_value: number | null;       // Value in dollars
+  old_price: number | null;
+  new_price: number | null;
+  discount_type: string | null;    // "percentage", etc.
+  discount: number | null;         // Discount amount
+  applicable_to_type: string | null;    // Eligibility info
+  offer_categories: string[];      // Category slugs
+  investment_levels: string[];     // Funding stages
+  terms_and_conditions_text: string | null;
+  terms_and_conditions: string | null;
+  getproven_link: string;          // Redemption URL
 }
 
 export interface GetProvenCategory {

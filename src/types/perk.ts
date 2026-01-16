@@ -20,6 +20,7 @@ export interface PerkProvider {
   id: string;
   name: string;
   logo?: string;
+  faviconUrl?: string; // Derived from website domain, used as fallback for logo
   website?: string;
   description?: string;
 }
@@ -96,7 +97,7 @@ export interface PerkListItem {
   slug: string;
   shortDescription: string;
   category: Pick<PerkCategory, 'id' | 'name' | 'slug'>;
-  provider: Pick<PerkProvider, 'id' | 'name' | 'logo'>;
+  provider: Pick<PerkProvider, 'id' | 'name' | 'logo' | 'faviconUrl'>;
   value: PerkValue;
   status: PerkStatus;
   featured?: boolean;

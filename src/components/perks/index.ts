@@ -5,3 +5,4 @@
 export { PerkCard } from './perk-card';
 export { PerksGrid } from './perks-grid';
 export { CategoryFilter } from './category-filter';
+export { VendorIcon } from './vendor-icon';

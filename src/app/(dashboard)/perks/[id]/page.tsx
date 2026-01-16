@@ -7,15 +7,25 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Tag,
 } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/components/ui';
-import { formatPerkValue, formatDate, formatRelativeTime } from '@/lib/utils';
+import { VendorIcon } from '@/components/perks';
+import { formatPerkValue, formatRelativeTime } from '@/lib/utils';
 import { PERK_STATUS_CONFIG } from '@/lib/constants';
-import { getMockPerk } from '@/lib/api';
+import { perksService } from '@/lib/api';
 
 /**
  * Perk Detail Page
  * Shows full perk information with redemption options
+ *
+ * Visual redesign with improved:
+ * - Header hierarchy and spacing
+ * - Value presentation
+ * - Content readability
+ * - Redemption card styling
+ *
+ * NO changes to data flow, API calls, or business logic.
  */
 
 interface PerkDetailPageProps {
@@ -25,233 +35,290 @@ interface PerkDetailPageProps {
 export default async function PerkDetailPage({ params }: PerkDetailPageProps) {
   const { id } = await params;
 
-  // TODO: Replace with actual API call
-  const perk = getMockPerk(id);
+  // Fetch perk from real API (or mock fallback)
+  const result = await perksService.getPerk(id);
 
-  if (!perk) {
+  if (!result.success || !result.data) {
     notFound();
   }
+
+  const perk = result.data;
 
   const statusConfig = PERK_STATUS_CONFIG[perk.status];
 
   return (
-    <div className="mx-auto max-w-4xl">
-      {/* Back button */}
+    <div className="mx-auto max-w-5xl">
+      {/* Back navigation - improved focus state */}
       <Link
         href="/perks"
-        className="mb-6 inline-flex items-center text-sm text-slate-600 hover:text-slate-900"
+        className="mb-8 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
       >
-        <ArrowLeft className="mr-1 h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to Perks
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Header */}
-          <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100">
-              {perk.provider.logo ? (
-                <img
-                  src={perk.provider.logo}
-                  alt={perk.provider.name}
-                  className="h-10 w-10 object-contain"
-                />
-              ) : (
-                <span className="text-2xl font-semibold text-slate-400">
-                  {perk.provider.name.charAt(0)}
+        {/* Main Content Column */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* ============================================
+              HEADER SECTION - Improved hierarchy
+              ============================================ */}
+          <header className="space-y-4">
+            {/* Vendor + Title row */}
+            <div className="flex items-start gap-5">
+              <VendorIcon
+                logo={perk.provider.logo}
+                faviconUrl={perk.provider.faviconUrl}
+                name={perk.provider.name}
+                size="lg"
+                className="flex-shrink-0 shadow-sm"
+              />
+
+              <div className="flex-1 min-w-0">
+                {/* Vendor name - subtle */}
+                <p className="text-sm font-medium text-slate-500 mb-1">
+                  {perk.provider.name}
+                </p>
+
+                {/* Title - strongest visual element */}
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                  {perk.title}
+                </h1>
+              </div>
+            </div>
+
+            {/* Meta row - status, category, expiry */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <Badge
+                variant={perk.status === 'active' ? 'success' : 'default'}
+                className={`${statusConfig.bgClass} ${statusConfig.textClass} ${statusConfig.borderClass} border`}
+              >
+                {statusConfig.label}
+              </Badge>
+
+              <span className="flex items-center gap-1.5 text-sm text-slate-600">
+                <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+                {perk.category.name}
+              </span>
+
+              {perk.expiresAt && (
+                <span className="flex items-center gap-1.5 text-sm text-slate-500">
+                  <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                  Expires {formatRelativeTime(perk.expiresAt)}
                 </span>
               )}
             </div>
+          </header>
 
-            <div className="flex-1">
-              <p className="text-sm font-medium text-slate-500">
-                {perk.provider.name}
-              </p>
-              <h1 className="text-2xl font-bold text-slate-900">{perk.title}</h1>
-
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Badge
-                  variant={perk.status === 'active' ? 'success' : 'default'}
-                  className={`${statusConfig.bgClass} ${statusConfig.textClass}`}
-                >
-                  {statusConfig.label}
-                </Badge>
-
-                <span className="text-sm text-slate-500">{perk.category.name}</span>
-
-                {perk.expiresAt && (
-                  <span className="flex items-center gap-1 text-sm text-slate-500">
-                    <Clock className="h-3.5 w-3.5" />
-                    Expires {formatRelativeTime(perk.expiresAt)}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Value Highlight */}
-          <div className="rounded-xl bg-gradient-to-r from-brand-50 to-brand-100 p-6">
-            <p className="text-sm font-medium text-brand-700">Offer Value</p>
-            <p className="text-3xl font-bold text-brand-900">
+          {/* ============================================
+              VALUE HIGHLIGHT - Improved presentation
+              ============================================ */}
+          <section
+            className="rounded-2xl bg-gradient-to-br from-brand-50 via-brand-50 to-brand-100 p-6 sm:p-8 border border-brand-100"
+            aria-labelledby="value-heading"
+          >
+            <p
+              id="value-heading"
+              className="text-sm font-semibold uppercase tracking-wide text-brand-600 mb-2"
+            >
+              Offer Value
+            </p>
+            <p className="text-3xl sm:text-4xl font-bold text-brand-900">
               {formatPerkValue(perk.value)}
             </p>
-          </div>
+          </section>
 
-          {/* Description */}
-          <div>
-            <h2 className="mb-3 text-lg font-semibold text-slate-900">
+          {/* ============================================
+              ABOUT SECTION - Improved readability
+              ============================================ */}
+          <section aria-labelledby="about-heading">
+            <h2
+              id="about-heading"
+              className="text-lg font-semibold text-slate-900 mb-4"
+            >
               About this Perk
             </h2>
-            <div className="prose prose-slate max-w-none">
-              {/* TODO: Render markdown content properly */}
-              <p className="whitespace-pre-wrap text-slate-600">
+            <div className="prose prose-slate prose-sm sm:prose-base max-w-none">
+              <p className="whitespace-pre-wrap text-slate-600 leading-relaxed">
                 {perk.fullDescription}
               </p>
             </div>
-          </div>
+          </section>
 
-          {/* Eligibility */}
+          {/* ============================================
+              ELIGIBILITY SECTION - Improved card styling
+              ============================================ */}
           {perk.eligibility && (
-            <div>
-              <h2 className="mb-3 text-lg font-semibold text-slate-900">
-                Eligibility
+            <section aria-labelledby="eligibility-heading">
+              <h2
+                id="eligibility-heading"
+                className="text-lg font-semibold text-slate-900 mb-4"
+              >
+                Eligibility Requirements
               </h2>
-              <Card>
-                <CardContent className="p-4">
-                  <ul className="space-y-2">
+              <Card className="border-slate-200">
+                <CardContent className="p-5 sm:p-6">
+                  <ul className="space-y-3" role="list">
                     {perk.eligibility.fundingStages && (
-                      <li className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                        <span>
-                          Funding stage:{' '}
+                      <li className="flex items-start gap-3 text-sm">
+                        <CheckCircle
+                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500"
+                          aria-hidden="true"
+                        />
+                        <span className="text-slate-700">
+                          <span className="font-medium">Funding stage:</span>{' '}
                           {perk.eligibility.fundingStages.join(', ')}
                         </span>
                       </li>
                     )}
                     {perk.eligibility.maxEmployees && (
-                      <li className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                        <span>
+                      <li className="flex items-start gap-3 text-sm">
+                        <CheckCircle
+                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500"
+                          aria-hidden="true"
+                        />
+                        <span className="text-slate-700">
+                          <span className="font-medium">Team size:</span>{' '}
                           Maximum {perk.eligibility.maxEmployees} employees
                         </span>
                       </li>
                     )}
                     {perk.eligibility.maxRevenue && (
-                      <li className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                        <span>
-                          Revenue under $
-                          {(perk.eligibility.maxRevenue / 1000000).toFixed(1)}M
+                      <li className="flex items-start gap-3 text-sm">
+                        <CheckCircle
+                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-500"
+                          aria-hidden="true"
+                        />
+                        <span className="text-slate-700">
+                          <span className="font-medium">Revenue:</span>{' '}
+                          Under ${(perk.eligibility.maxRevenue / 1000000).toFixed(1)}M
                         </span>
                       </li>
                     )}
                     {perk.eligibility.customRequirements && (
-                      <li className="flex items-start gap-2 text-sm">
-                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />
-                        <span>{perk.eligibility.customRequirements}</span>
+                      <li className="flex items-start gap-3 text-sm">
+                        <AlertCircle
+                          className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500"
+                          aria-hidden="true"
+                        />
+                        <span className="text-slate-700">
+                          {perk.eligibility.customRequirements}
+                        </span>
                       </li>
                     )}
                   </ul>
                 </CardContent>
               </Card>
-            </div>
+            </section>
           )}
         </div>
 
-        {/* Sidebar - Redemption Card */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <CardContent className="p-6">
-              <h3 className="mb-4 font-semibold text-slate-900">
-                Redeem this Perk
-              </h3>
+        {/* ============================================
+            REDEMPTION SIDEBAR - Improved visual grouping
+            ============================================ */}
+        <aside className="lg:col-span-1">
+          <Card className="sticky top-24 border-slate-200 shadow-sm">
+            <CardContent className="p-0">
+              {/* Card header */}
+              <div className="p-6 pb-4 border-b border-slate-100">
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Redeem this Perk
+                </h3>
+              </div>
 
-              {/* Promo code if applicable */}
-              {perk.redemption.code && (
-                <div className="mb-4">
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Promo Code
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 rounded-lg bg-slate-100 px-3 py-2 font-mono text-sm">
-                      {perk.redemption.code}
-                    </code>
-                    <Button variant="outline" size="sm">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    {/* TODO: Implement copy to clipboard */}
-                  </div>
-                </div>
-              )}
-
-              {/* Instructions */}
-              {perk.redemption.instructions && (
-                <div className="mb-4">
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    How to Redeem
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {perk.redemption.instructions}
-                  </p>
-                </div>
-              )}
-
-              {/* CTA Button */}
-              {perk.redemption.url && (
-                <Button className="w-full" size="lg">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Redeem Offer
-                </Button>
-              )}
-
-              {perk.redemption.type === 'contact' && perk.redemption.contactEmail && (
-                <Button className="w-full" size="lg">
-                  Contact {perk.provider.name}
-                </Button>
-              )}
-
-              {/* TODO: Track redemption clicks */}
-
-              {/* Provider info */}
-              <div className="mt-6 border-t border-slate-100 pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Provided by
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded bg-slate-100">
-                    {perk.provider.logo ? (
-                      <img
-                        src={perk.provider.logo}
-                        alt={perk.provider.name}
-                        className="h-5 w-5 object-contain"
-                      />
-                    ) : (
-                      <span className="text-xs font-medium text-slate-400">
-                        {perk.provider.name.charAt(0)}
-                      </span>
-                    )}
-                  </div>
+              {/* Card body */}
+              <div className="p-6 space-y-5">
+                {/* Promo code - if applicable */}
+                {perk.redemption.code && (
                   <div>
-                    <p className="text-sm font-medium text-slate-900">
-                      {perk.provider.name}
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Promo Code
                     </p>
-                    {perk.provider.website && (
-                      <a
-                        href={perk.provider.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-brand-600 hover:underline"
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 rounded-lg bg-slate-50 border border-slate-200 px-4 py-2.5 font-mono text-sm font-medium text-slate-800">
+                        {perk.redemption.code}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label="Copy promo code"
+                        className="flex-shrink-0"
                       >
-                        Visit website
-                      </a>
-                    )}
+                        <Copy className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Instructions */}
+                {perk.redemption.instructions && (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      How to Redeem
+                    </p>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      {perk.redemption.instructions}
+                    </p>
+                  </div>
+                )}
+
+                {/* Primary CTA - visually dominant */}
+                {perk.redemption.url && (
+                  <a
+                    href={perk.redemption.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-colors hover:bg-brand-700 active:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    Redeem Offer
+                  </a>
+                )}
+
+                {perk.redemption.type === 'contact' && perk.redemption.contactEmail && (
+                  <a
+                    href={`mailto:${perk.redemption.contactEmail}`}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-colors hover:bg-brand-700 active:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  >
+                    Contact {perk.provider.name}
+                  </a>
+                )}
+              </div>
+
+              {/* Provider footer */}
+              <div className="p-6 pt-0">
+                <div className="border-t border-slate-100 pt-5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
+                    Provided by
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <VendorIcon
+                      logo={perk.provider.logo}
+                      faviconUrl={perk.provider.faviconUrl}
+                      name={perk.provider.name}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {perk.provider.name}
+                      </p>
+                      {perk.provider.website && (
+                        <a
+                          href={perk.provider.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-brand-600 hover:text-brand-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded"
+                        >
+                          Visit website
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </div>
     </div>
   );

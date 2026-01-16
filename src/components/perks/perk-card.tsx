@@ -2,41 +2,94 @@
  * Perk Card component
  * Displays a perk in the listing grid
  * Hardened for real-world API data with graceful fallbacks
+ *
+ * Icon sourcing priority:
+ * 1. provider.logo (if available from API)
+ * 2. provider.faviconUrl (derived from vendor website domain)
+ * 3. Provider initial letter (fallback)
  */
 
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Star } from 'lucide-react';
 import { Card, Badge } from '@/components/ui';
 import { formatPerkValue } from '@/lib/utils';
-import { PERK_STATUS_CONFIG } from '@/lib/constants';
 import type { PerkListItem } from '@/types';
 
 interface PerkCardProps {
   perk: PerkListItem;
 }
 
-// Default status config for unknown statuses
-const DEFAULT_STATUS_CONFIG = {
-  label: 'Unknown',
-  color: 'gray',
-  bgClass: 'bg-gray-50',
-  textClass: 'text-gray-700',
-  borderClass: 'border-gray-200',
-};
+/**
+ * Vendor icon component with fallback chain:
+ * logo -> favicon -> initial letter
+ */
+function VendorIcon({
+  logo,
+  faviconUrl,
+  providerName,
+}: {
+  logo?: string;
+  faviconUrl?: string;
+  providerName: string;
+}) {
+  const [imageError, setImageError] = useState(false);
+  const [faviconError, setFaviconError] = useState(false);
+
+  const initial = providerName.charAt(0).toUpperCase();
+
+  // Determine which image source to use
+  const showLogo = logo && !imageError;
+  const showFavicon = !showLogo && faviconUrl && !faviconError;
+  const showInitial = !showLogo && !showFavicon;
+
+  return (
+    <div
+      className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100"
+      aria-hidden="true"
+    >
+      {showLogo && (
+        <Image
+          src={logo}
+          alt=""
+          width={32}
+          height={32}
+          className="h-8 w-8 object-contain"
+          loading="lazy"
+          unoptimized={logo.startsWith('/')} // Local images don't need optimization
+          onError={() => setImageError(true)}
+        />
+      )}
+      {showFavicon && (
+        <Image
+          src={faviconUrl}
+          alt=""
+          width={32}
+          height={32}
+          className="h-8 w-8 object-contain"
+          loading="lazy"
+          unoptimized // Google favicon service handles optimization
+          onError={() => setFaviconError(true)}
+        />
+      )}
+      {showInitial && (
+        <span className="text-lg font-semibold text-slate-400">
+          {initial}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export function PerkCard({ perk }: PerkCardProps) {
-  // Guard against unknown status values from API
-  const statusConfig = PERK_STATUS_CONFIG[perk.status] || DEFAULT_STATUS_CONFIG;
-
   // Safely get provider name with fallback
   const providerName = perk.provider?.name?.trim() || 'Unknown Provider';
-  const providerInitial = providerName.charAt(0).toUpperCase();
 
   // Safely get description with fallback
   const description = perk.shortDescription?.trim() || 'No description available';
-
-  // Safely get category name with fallback
-  const categoryName = perk.category?.name?.trim() || 'Uncategorized';
 
   // Safely format value with fallback
   const formattedValue = perk.value
@@ -52,27 +105,11 @@ export function PerkCard({ perk }: PerkCardProps) {
         <div className="p-5">
           {/* Header with logo and featured badge */}
           <div className="mb-4 flex items-start justify-between">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100"
-              aria-hidden="true"
-            >
-              {perk.provider?.logo ? (
-                <img
-                  src={perk.provider.logo}
-                  alt=""
-                  className="h-8 w-8 object-contain"
-                  loading="lazy"
-                  onError={(e) => {
-                    // Hide broken image, fallback will show
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ) : (
-                <span className="text-lg font-semibold text-slate-400">
-                  {providerInitial}
-                </span>
-              )}
-            </div>
+            <VendorIcon
+              logo={perk.provider?.logo}
+              faviconUrl={perk.provider?.faviconUrl}
+              providerName={providerName}
+            />
 
             {perk.featured && (
               <Badge variant="info" className="flex items-center gap-1">
@@ -102,17 +139,6 @@ export function PerkCard({ perk }: PerkCardProps) {
             <span className="inline-block rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700">
               {formattedValue}
             </span>
-          </div>
-
-          {/* Footer with category and status */}
-          <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-            <span className="text-xs text-slate-500">{categoryName}</span>
-            <Badge
-              variant={perk.status === 'active' ? 'success' : 'default'}
-              className={`${statusConfig.bgClass} ${statusConfig.textClass}`}
-            >
-              {statusConfig.label}
-            </Badge>
           </div>
         </div>
       </Card>
