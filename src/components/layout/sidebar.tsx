@@ -144,7 +144,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
             <img
               src="/logos/getproven-logo.png"
               alt="GetProven"
-              className="h-3 w-auto"
+              className="h-2 w-auto"
             />
           </a>
         </div>
