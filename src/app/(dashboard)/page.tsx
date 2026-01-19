@@ -1,30 +1,61 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowRight,
   Gift,
   DollarSign,
   Sparkles,
-  TrendingUp,
-  Star,
   AlertCircle,
 } from 'lucide-react';
 import { Button, Card, Badge } from '@/components/ui';
 import { perksService } from '@/lib/api';
-import { formatPerkValue } from '@/lib/utils';
+import type { GetProvenDeal } from '@/types';
 
 /**
  * Dashboard Home Page
- * Powered by real GetProven API data
- * Founder-first experience with visual hierarchy
+ * STRICT: Uses ONLY real GetProven API data
  */
+
+/**
+ * Strip HTML and truncate text
+ */
+function truncateDescription(html: string, maxLength: number): string {
+  if (!html) return '';
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + '...';
+}
+
+/**
+ * Format estimated value for display
+ */
+function formatValue(value: number | null): string {
+  if (!value) return 'Special offer';
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(0)}K value`;
+  }
+  return `$${value.toLocaleString()} value`;
+}
+
+/**
+ * Format discount display
+ */
+function formatDiscount(discount: number | null, discountType: string | null): string | null {
+  if (!discount) return null;
+  if (discountType === 'percentage') {
+    return `${discount}% off`;
+  }
+  return `$${discount.toLocaleString()} off`;
+}
+
 export default async function DashboardPage() {
-  // Fetch all data from real API
+  // Fetch data from real API
   const [featuredResult, stats] = await Promise.all([
-    perksService.getFeaturedPerks(4),
+    perksService.getFeaturedOffers(4),
     perksService.getDashboardStats(),
   ]);
 
-  const featuredPerks = featuredResult.success ? featuredResult.data : [];
+  const featuredOffers: GetProvenDeal[] = featuredResult.success ? featuredResult.data : [];
 
   return (
     <div className="space-y-10">
@@ -43,25 +74,15 @@ export default async function DashboardPage() {
             worth over {stats.totalValue} in savings.
           </p>
           <div className="mt-6 flex gap-3">
-            {/*
-              Navigation styled as button. Using Link (not Button inside Link)
-              to avoid nested interactive elements. Focus ring uses white with
-              offset for visibility on dark gradient background.
-            */}
             <Link
               href="/perks"
               className={[
-                // Base button styles
                 'inline-flex items-center justify-center gap-2',
                 'min-h-[44px] px-5 rounded-lg font-medium text-sm',
-                // Colors with sufficient contrast (white bg, slate-900 text = 15.4:1)
                 'bg-white text-slate-900',
-                // Interaction states
                 'hover:bg-slate-100',
                 'active:bg-slate-200',
-                // Focus: white ring visible on dark background
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
-                // Transition
                 'transition-colors duration-150',
               ].join(' ')}
             >
@@ -70,7 +91,6 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
-        {/* Background decoration */}
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-brand-500/10 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-brand-600/10 blur-3xl" />
       </section>
@@ -101,7 +121,7 @@ export default async function DashboardPage() {
                 <div>
                   <p className="text-sm font-medium text-blue-600">Available Perks</p>
                   <p className="mt-1 text-3xl font-bold text-blue-900">{stats.totalPerks}</p>
-                  <p className="mt-1 text-sm text-blue-600/70">ready to redeem</p>
+                  <p className="mt-1 text-sm text-blue-600/70">ready to explore</p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10">
                   <Gift className="h-6 w-6 text-blue-600" />
@@ -121,7 +141,7 @@ export default async function DashboardPage() {
               Hand-picked offers with the highest value for founders
             </p>
           </div>
-          <Link href="/perks?featured=true">
+          <Link href="/perks">
             <Button variant="ghost" size="sm" className="text-slate-600">
               View all
               <ArrowRight className="ml-1 h-4 w-4" />
@@ -129,46 +149,65 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {featuredPerks.length > 0 ? (
+        {featuredOffers.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredPerks.map((perk) => (
-              <Link key={perk.id} href={`/perks/${perk.slug}`}>
+            {featuredOffers.map((offer) => (
+              <Link key={offer.id} href={`/perks/${offer.id}`}>
                 <Card hover className="group h-full">
                   <div className="p-5">
-                    {/* Provider logo */}
+                    {/* Offer image - only show if picture exists */}
                     <div className="mb-4 flex items-center justify-between">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 transition-colors group-hover:bg-slate-200">
-                        <span className="text-base font-semibold text-slate-500">
-                          {perk.provider.name.charAt(0)}
-                        </span>
-                      </div>
-                      <Badge variant="info" className="flex items-center gap-1 text-xs">
-                        <Star className="h-3 w-3" aria-hidden="true" />
-                        Featured
-                      </Badge>
+                      {offer.picture ? (
+                        <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                          <Image
+                            src={offer.picture}
+                            alt=""
+                            width={44}
+                            height={44}
+                            className="h-full w-full object-contain"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 transition-colors group-hover:bg-slate-200">
+                          <span className="text-base font-semibold text-slate-500">
+                            {offer.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Provider name */}
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                      {perk.provider.name}
-                    </p>
+                    {/* Deal type */}
+                    {offer.deal_type && (
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                        {offer.deal_type}
+                      </p>
+                    )}
 
-                    {/* Title */}
-                    <h3 className="mt-1 font-semibold text-slate-900 line-clamp-1 group-hover:text-brand-600">
-                      {perk.title}
+                    {/* Name */}
+                    <h3 className="mt-1 font-semibold text-slate-900 line-clamp-2 group-hover:text-brand-600">
+                      {offer.name}
                     </h3>
 
                     {/* Description */}
-                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">
-                      {perk.shortDescription}
-                    </p>
+                    {offer.description && (
+                      <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+                        {truncateDescription(offer.description, 80)}
+                      </p>
+                    )}
 
-                    {/* Value */}
-                    <div className="mt-4">
-                      <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-1 text-sm font-semibold text-emerald-700">
-                        <TrendingUp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
-                        {formatPerkValue(perk.value)}
-                      </span>
+                    {/* Value badges */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {formatDiscount(offer.discount, offer.discount_type) && (
+                        <Badge variant="success" className="text-xs">
+                          {formatDiscount(offer.discount, offer.discount_type)}
+                        </Badge>
+                      )}
+                      {offer.estimated_value && (
+                        <Badge variant="info" className="text-xs">
+                          {formatValue(offer.estimated_value)}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -185,7 +224,6 @@ export default async function DashboardPage() {
           </Card>
         )}
       </section>
-
     </div>
   );
 }

@@ -1,52 +1,70 @@
 'use client';
 
 /**
- * Perks Listing Page
- * Fetches data from internal API routes (which proxy to GetProven)
- * STRICT: Real API data only. NO mock fallbacks.
+ * Perks (Offers) Listing Page
  *
- * Pagination: Uses API-provided 'next' URL with "Load more" pattern.
- * DO NOT calculate pages client-side.
+ * STRICT: Uses ONLY GetProven API data
+ * - Fetches from /offers/ with page and page_size
+ * - Load more using API-provided 'next' URL
+ * - Stop fetching when next is null
+ * - Filter by offer_categories and investment_levels (comma-separated)
+ * - Filter values derived dynamically from API responses
+ * - NO hardcoded filter options
+ * - NO claimed/redeemed/expiry/popularity indicators
  */
 
-import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { SlidersHorizontal, AlertCircle, Loader2 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
-import { PerksGrid, CategoryFilter } from '@/components/perks';
-import type { PerkListItem, PerkCategory } from '@/types';
+import { Suspense, useEffect, useState, useCallback } from 'react';
+import { AlertCircle, Loader2, Filter, X } from 'lucide-react';
+import { Button, Card } from '@/components/ui';
+import { OffersGrid } from '@/components/perks';
+import type { GetProvenDeal } from '@/types';
 
 const PAGE_SIZE = 24;
 
-function PerksPageContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+interface FilterOptions {
+  offerCategories: string[];
+  investmentLevels: string[];
+}
 
-  const [perks, setPerks] = useState<PerkListItem[]>([]);
-  const [categories, setCategories] = useState<PerkCategory[]>([]);
+interface ActiveFilters {
+  offerCategories: string[];
+  investmentLevels: string[];
+}
+
+function PerksPageContent() {
+  // Data state
+  const [offers, setOffers] = useState<GetProvenDeal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [totalCount, setTotalCount] = useState(0);
   const [nextUrl, setNextUrl] = useState<string | null>(null);
 
-  const categorySlug = searchParams.get('category') || undefined;
+  // Filter state
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    offerCategories: [],
+    investmentLevels: [],
+  });
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
+    offerCategories: [],
+    investmentLevels: [],
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch categories
-  const fetchCategories = useCallback(async () => {
+  // Fetch filter options from API (derived dynamically)
+  const fetchFilterOptions = useCallback(async () => {
     try {
-      const res = await fetch('/api/categories');
-      if (!res.ok) throw new Error('Failed to fetch categories');
+      const res = await fetch('/api/perks/filters');
+      if (!res.ok) return;
       const data = await res.json();
-      setCategories(data);
+      setFilterOptions(data);
     } catch (err) {
-      console.error('Categories fetch error:', err);
+      console.error('Failed to fetch filter options:', err);
     }
   }, []);
 
-  // Fetch perks with "Load more" pattern using API-provided next URL
-  const fetchPerks = useCallback(async (loadMore = false) => {
+  // Fetch offers with "Load more" pattern
+  const fetchOffers = useCallback(async (loadMore = false) => {
     if (loadMore) {
       setIsLoadingMore(true);
     } else {
@@ -58,69 +76,85 @@ function PerksPageContent() {
       let url: string;
 
       if (loadMore && nextUrl) {
+        // Use API-provided next URL
         url = `/api/perks?next=${encodeURIComponent(nextUrl)}`;
       } else {
+        // Initial fetch with page and page_size
         const params = new URLSearchParams();
-        params.set('pageSize', String(PAGE_SIZE));
-        if (categorySlug) params.set('category', categorySlug);
-        if (searchQuery) params.set('search', searchQuery);
+        params.set('page', '1');
+        params.set('page_size', String(PAGE_SIZE));
+
+        if (activeFilters.offerCategories.length > 0) {
+          params.set('offer_categories', activeFilters.offerCategories.join(','));
+        }
+        if (activeFilters.investmentLevels.length > 0) {
+          params.set('investment_levels', activeFilters.investmentLevels.join(','));
+        }
+
         url = `/api/perks?${params.toString()}`;
       }
 
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch perks');
+      if (!res.ok) throw new Error('Failed to fetch offers');
 
       const data = await res.json();
 
       if (loadMore) {
-        setPerks((prev) => [...prev, ...(data.data || [])]);
+        setOffers((prev) => [...prev, ...(data.data || [])]);
       } else {
-        setPerks(data.data || []);
+        setOffers(data.data || []);
         setTotalCount(data.pagination?.count || 0);
       }
 
       setNextUrl(data.pagination?.next || null);
     } catch (err) {
-      console.error('Perks fetch error:', err);
+      console.error('Offers fetch error:', err);
       setError('Unable to load perks. Please try again.');
-      if (!loadMore) setPerks([]);
+      if (!loadMore) setOffers([]);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  }, [categorySlug, searchQuery, nextUrl]);
+  }, [nextUrl, activeFilters]);
 
   // Initial fetch
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchFilterOptions();
+  }, [fetchFilterOptions]);
 
-  // Fetch perks when filters change (reset to first page)
+  // Fetch offers when filters change
   useEffect(() => {
-    setPerks([]);
+    setOffers([]);
     setNextUrl(null);
-    fetchPerks(false);
-  }, [categorySlug, searchQuery]);
+    fetchOffers(false);
+  }, [activeFilters]);
 
-  const handleCategorySelect = (slug: string | undefined) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (slug) {
-      params.set('category', slug);
-    } else {
-      params.delete('category');
-    }
-    router.push(`/perks?${params.toString()}`);
+  // Toggle filter value
+  const toggleFilter = (type: 'offerCategories' | 'investmentLevels', value: string) => {
+    setActiveFilters((prev) => {
+      const current = prev[type];
+      const updated = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      return { ...prev, [type]: updated };
+    });
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Clear all filters
+  const clearFilters = () => {
+    setActiveFilters({
+      offerCategories: [],
+      investmentLevels: [],
+    });
   };
 
-  const handleLoadMore = () => {
-    if (nextUrl && !isLoadingMore) {
-      fetchPerks(true);
-    }
-  };
+  const hasActiveFilters =
+    activeFilters.offerCategories.length > 0 ||
+    activeFilters.investmentLevels.length > 0;
+
+  const hasFilterOptions =
+    filterOptions.offerCategories.length > 0 ||
+    filterOptions.investmentLevels.length > 0;
 
   return (
     <div className="space-y-6">
@@ -133,38 +167,82 @@ function PerksPageContent() {
           </p>
         </div>
 
-        {/* Search and filters */}
-        <div className="flex gap-2">
-          <form onSubmit={handleSearch} className="relative">
-            <Input
-              type="search"
-              placeholder="Search perks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64"
-              aria-label="Search perks"
-            />
-          </form>
-
+        {/* Filter toggle button */}
+        {hasFilterOptions && (
           <Button
-            variant="outline"
-            size="md"
-            aria-label="Open filters"
-            aria-haspopup="dialog"
+            variant={showFilters ? 'default' : 'outline'}
+            onClick={() => setShowFilters(!showFilters)}
           >
-            <SlidersHorizontal className="mr-2 h-4 w-4" aria-hidden="true" />
+            <Filter className="mr-2 h-4 w-4" />
             Filters
+            {hasActiveFilters && (
+              <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+                {activeFilters.offerCategories.length + activeFilters.investmentLevels.length}
+              </span>
+            )}
           </Button>
-        </div>
+        )}
       </div>
 
-      {/* Category Filter - only show if categories loaded */}
-      {categories.length > 0 && (
-        <CategoryFilter
-          categories={categories}
-          selectedCategory={categorySlug}
-          onSelect={handleCategorySelect}
-        />
+      {/* Filters Panel */}
+      {showFilters && hasFilterOptions && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-slate-900">Filter Offers</h3>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="mr-1 h-4 w-4" />
+                Clear all
+              </Button>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {/* Investment Levels Filter */}
+            {filterOptions.investmentLevels.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-slate-700 mb-2">Investment Level</p>
+                <div className="flex flex-wrap gap-2">
+                  {filterOptions.investmentLevels.map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => toggleFilter('investmentLevels', level)}
+                      className={`rounded-full px-3 py-1 text-sm transition-colors ${
+                        activeFilters.investmentLevels.includes(level)
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Offer Categories Filter */}
+            {filterOptions.offerCategories.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-slate-700 mb-2">Category</p>
+                <div className="flex flex-wrap gap-2">
+                  {filterOptions.offerCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => toggleFilter('offerCategories', cat)}
+                      className={`rounded-full px-3 py-1 text-sm transition-colors ${
+                        activeFilters.offerCategories.includes(cat)
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
       {/* Error State */}
@@ -178,7 +256,7 @@ function PerksPageContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fetchPerks(false)}
+            onClick={() => fetchOffers(false)}
             className="ml-auto text-red-700 hover:bg-red-100"
           >
             Retry
@@ -195,30 +273,22 @@ function PerksPageContent() {
             : `${totalCount} ${totalCount === 1 ? 'perk' : 'perks'} found`}
         </p>
 
-        {/* Perks Grid */}
-        <PerksGrid
-          perks={perks}
+        {/* Offers Grid */}
+        <OffersGrid
+          offers={offers}
           isLoading={isLoading}
-          emptyMessage={
-            error
-              ? 'Unable to load perks'
-              : categorySlug
-              ? 'No perks found in this category'
-              : searchQuery
-              ? `No perks found for "${searchQuery}"`
-              : 'No perks available'
-          }
+          emptyMessage="No perks available"
         />
 
         {/* Load More Button */}
         {nextUrl && !isLoading && (
-          <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6">
+          <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
-              Showing {perks.length} of {totalCount} perks
+              Showing {offers.length} of {totalCount} perks
             </p>
             <Button
               variant="outline"
-              onClick={handleLoadMore}
+              onClick={() => fetchOffers(true)}
               disabled={isLoadingMore}
             >
               {isLoadingMore ? (
@@ -233,11 +303,11 @@ function PerksPageContent() {
           </div>
         )}
 
-        {/* Show count when all loaded */}
-        {!nextUrl && !isLoading && perks.length > 0 && (
-          <div className="flex justify-center border-t border-slate-200 pt-6">
+        {/* All loaded message */}
+        {!nextUrl && !isLoading && offers.length > 0 && (
+          <div className="flex justify-center border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
-              Showing all {perks.length} perks
+              Showing all {offers.length} perks
             </p>
           </div>
         )}
@@ -247,21 +317,14 @@ function PerksPageContent() {
 }
 
 /**
- * Loading fallback for Suspense boundary
+ * Loading fallback
  */
 function PerksPageLoading() {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="h-8 w-32 animate-pulse rounded bg-slate-200" />
-          <div className="mt-2 h-5 w-64 animate-pulse rounded bg-slate-100" />
-        </div>
-      </div>
-      <div className="flex gap-2 overflow-x-auto py-2">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-9 w-24 animate-pulse rounded-full bg-slate-100" />
-        ))}
+      <div>
+        <div className="h-8 w-32 animate-pulse rounded bg-slate-200" />
+        <div className="mt-2 h-5 w-64 animate-pulse rounded bg-slate-100" />
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -272,9 +335,6 @@ function PerksPageLoading() {
   );
 }
 
-/**
- * Page wrapper with Suspense boundary for useSearchParams
- */
 export default function PerksPage() {
   return (
     <Suspense fallback={<PerksPageLoading />}>

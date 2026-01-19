@@ -1,39 +1,22 @@
 /**
  * Perks Service
  *
- * High-level service for perk operations.
- * STRICT: Uses ONLY real GetProven API data.
- * NO mock data. NO fallbacks. NO derived values.
+ * Fetches offers from GetProven API.
+ * STRICT: Returns RAW API data only. NO normalization. NO mock data.
  */
 
 import type {
-  Perk,
-  PerkListItem,
-  PerkCategory,
-  PerkFilters,
-  PaginatedResponse,
+  GetProvenDeal,
+  GetProvenListResponse,
   ApiResponse,
 } from '@/types';
 import { getProvenClient, GetProvenApiError } from './getproven-client';
-import {
-  normalizeDeal,
-  normalizeDealToListItem,
-  normalizeCategory,
-} from '../normalizers/getproven';
+
+const API_BASE_URL = process.env.GETPROVEN_API_URL || 'https://provendeals.getproven.com/api/ext/v1';
+const API_TOKEN = process.env.GETPROVEN_API_TOKEN;
 
 /**
- * Generate URL-safe slug from text
- */
-function generateSlug(text: string, id: string): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  return slug || id;
-}
-
-/**
- * Log API errors (server-side only, never expose details to client)
+ * Log API errors (server-side only)
  */
 function logApiError(operation: string, error: unknown): void {
   if (typeof window === 'undefined') {
@@ -45,49 +28,69 @@ function logApiError(operation: string, error: unknown): void {
 }
 
 /**
- * Perks Service - Main API for perk operations
- * STRICT: Real API data only. Returns empty states on failure.
+ * Fetch offers using API-provided next URL
+ */
+async function fetchWithNextUrl(nextUrl: string): Promise<GetProvenListResponse<GetProvenDeal>> {
+  const res = await fetch(nextUrl, {
+    headers: {
+      Authorization: `Token ${API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!res.ok) throw new Error('Failed to fetch next page');
+  return res.json();
+}
+
+export interface PerksFilters {
+  offerCategories?: string;   // Comma-separated
+  investmentLevels?: string;  // Comma-separated
+  search?: string;
+}
+
+export interface PerksResponse {
+  data: GetProvenDeal[];
+  pagination: {
+    count: number;
+    next: string | null;
+    previous: string | null;
+  };
+}
+
+/**
+ * Perks Service
  */
 export const perksService = {
   /**
-   * Get paginated list of perks
-   * Returns empty array if API fails - NO mock fallback
-   * Pagination uses API-provided next/previous URLs only
+   * Get offers from API
+   * Uses page/page_size for initial fetch, next URL for subsequent pages
    */
-  async getPerks(
+  async getOffers(
+    page = 1,
     pageSize = 24,
-    filters?: PerkFilters,
+    filters?: PerksFilters,
     nextUrl?: string
-  ): Promise<ApiResponse<PaginatedResponse<PerkListItem>>> {
+  ): Promise<ApiResponse<PerksResponse>> {
     try {
-      let response;
+      let response: GetProvenListResponse<GetProvenDeal>;
 
       if (nextUrl) {
-        // Fetch using the API-provided next URL directly
-        const res = await fetch(nextUrl, {
-          headers: {
-            Authorization: `Token ${process.env.GETPROVEN_API_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!res.ok) throw new Error('Failed to fetch next page');
-        response = await res.json();
+        // Use API-provided next URL directly
+        response = await fetchWithNextUrl(nextUrl);
       } else {
-        // Initial fetch
+        // Initial fetch with page and page_size
         response = await getProvenClient.getDeals({
+          page,
           pageSize,
           search: filters?.search,
-          category: filters?.category,
+          offerCategories: filters?.offerCategories,
+          investmentLevels: filters?.investmentLevels,
         });
       }
-
-      // Normalize all deals using the normalizer
-      const perks = response.results.map(normalizeDealToListItem);
 
       return {
         success: true,
         data: {
-          data: perks,
+          data: response.results,
           pagination: {
             count: response.count,
             next: response.next,
@@ -96,9 +99,7 @@ export const perksService = {
         },
       };
     } catch (error) {
-      logApiError('getPerks', error);
-
-      // Return empty state - NO mock fallback
+      logApiError('getOffers', error);
       return {
         success: true,
         data: {
@@ -114,38 +115,19 @@ export const perksService = {
   },
 
   /**
-   * Get single perk by ID or slug
-   * Returns error if not found - NO mock fallback
+   * Get single offer by ID
    */
-  async getPerk(idOrSlug: string): Promise<ApiResponse<Perk>> {
+  async getOfferById(id: string): Promise<ApiResponse<GetProvenDeal>> {
     try {
-      // Fetch offers from list and find by ID (API has no single-offer endpoint)
-      const response = await getProvenClient.getDeals({ pageSize: 500 });
-      const deal = response.results.find(
-        (d) => String(d.id) === idOrSlug || generateSlug(d.name, String(d.id)) === idOrSlug
-      );
-
-      if (!deal) {
-        return {
-          success: false,
-          error: {
-            code: 'NOT_FOUND',
-            message: 'Perk not found',
-            status: 404,
-          },
-        };
-      }
-
-      const perk = normalizeDeal(deal);
-      return { success: true, data: perk };
+      const deal = await getProvenClient.getDeal(id);
+      return { success: true, data: deal };
     } catch (error) {
-      logApiError('getPerk', error);
-
+      logApiError('getOfferById', error);
       return {
         success: false,
         error: {
           code: 'FETCH_ERROR',
-          message: 'Unable to load perk details',
+          message: 'Unable to load offer details',
           status: 500,
         },
       };
@@ -153,68 +135,91 @@ export const perksService = {
   },
 
   /**
-   * Get all categories
-   * Returns empty array if API fails - NO mock fallback
+   * Get all unique filter values from offers
+   * Fetches all offers to extract unique offer_categories and investment_levels
    */
-  async getCategories(): Promise<ApiResponse<PerkCategory[]>> {
+  async getFilterOptions(): Promise<{
+    offerCategories: string[];
+    investmentLevels: string[];
+  }> {
     try {
-      const response = await getProvenClient.getCategories();
-      const categories = response.results.map(normalizeCategory);
-      return { success: true, data: categories };
+      // Fetch a large batch to get filter values
+      const response = await getProvenClient.getDeals({ pageSize: 500 });
+
+      const categoriesSet = new Set<string>();
+      const levelsSet = new Set<string>();
+
+      for (const deal of response.results) {
+        // Extract offer categories
+        if (deal.offer_categories && Array.isArray(deal.offer_categories)) {
+          for (const cat of deal.offer_categories) {
+            if (cat.name) categoriesSet.add(cat.name);
+          }
+        }
+        // Extract investment levels
+        if (deal.investment_levels && Array.isArray(deal.investment_levels)) {
+          for (const level of deal.investment_levels) {
+            if (level.name) levelsSet.add(level.name);
+          }
+        }
+      }
+
+      return {
+        offerCategories: Array.from(categoriesSet).sort(),
+        investmentLevels: Array.from(levelsSet).sort(),
+      };
     } catch (error) {
-      logApiError('getCategories', error);
-      // Return empty array - NO mock fallback
-      return { success: true, data: [] };
+      logApiError('getFilterOptions', error);
+      return {
+        offerCategories: [],
+        investmentLevels: [],
+      };
     }
   },
 
   /**
-   * Get featured perks
-   * Returns first N perks from API - NO computed ranking
-   */
-  async getFeaturedPerks(limit = 4): Promise<ApiResponse<PerkListItem[]>> {
-    const result = await this.getPerks(1, limit);
-    if (!result.success) {
-      return { success: true, data: [] };
-    }
-    return { success: true, data: result.data.data };
-  },
-
-  /**
-   * Get dashboard stats from API data only
-   * NO estimated or derived values
+   * Get dashboard stats from API
    */
   async getDashboardStats(): Promise<{
     totalPerks: number;
     totalValue: string;
   }> {
-    const result = await this.getPerks(500);
-    if (!result.success) {
+    try {
+      const response = await getProvenClient.getDeals({ pageSize: 500 });
+      const totalPerks = response.count;
+
+      // Sum only explicit API values
+      const totalAmount = response.results.reduce((sum, deal) => {
+        return sum + (deal.estimated_value || 0);
+      }, 0);
+
+      // Format total value
+      let totalValue: string;
+      if (totalAmount >= 1000000) {
+        totalValue = `$${(totalAmount / 1000000).toFixed(1)}M+`;
+      } else if (totalAmount >= 1000) {
+        totalValue = `$${(totalAmount / 1000).toFixed(0)}K+`;
+      } else if (totalAmount > 0) {
+        totalValue = `$${totalAmount}+`;
+      } else {
+        totalValue = 'No data';
+      }
+
+      return { totalPerks, totalValue };
+    } catch (error) {
+      logApiError('getDashboardStats', error);
       return { totalPerks: 0, totalValue: 'No data' };
     }
+  },
 
-    const totalPerks = result.data.pagination.count;
-
-    // Sum only explicit API values
-    const totalAmount = result.data.data.reduce((sum, p) => {
-      return sum + (p.value.amount || 0);
-    }, 0);
-
-    // Format total value
-    let totalValue: string;
-    if (totalAmount >= 1000000) {
-      totalValue = `$${(totalAmount / 1000000).toFixed(1)}M+`;
-    } else if (totalAmount >= 1000) {
-      totalValue = `$${(totalAmount / 1000).toFixed(0)}K+`;
-    } else if (totalAmount > 0) {
-      totalValue = `$${totalAmount}+`;
-    } else {
-      totalValue = 'No data';
+  /**
+   * Get featured offers (first N offers)
+   */
+  async getFeaturedOffers(limit = 4): Promise<ApiResponse<GetProvenDeal[]>> {
+    const result = await this.getOffers(1, limit);
+    if (!result.success) {
+      return { success: true, data: [] };
     }
-
-    return {
-      totalPerks,
-      totalValue,
-    };
+    return { success: true, data: result.data.data };
   },
 };

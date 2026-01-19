@@ -50,10 +50,10 @@ function buildQueryString(options: ApiRequestOptions): string {
   const params = new URLSearchParams();
 
   if (options.page) params.set('page', String(options.page));
-  if (options.pageSize) params.set('page_size', String(options.pageSize));
+  if (options.pageSize) params.set('page_size', String(Math.min(options.pageSize, 1000)));
   if (options.search) params.set('search', options.search);
-  if (options.category) params.set('category', options.category);
-  if (options.ordering) params.set('ordering', options.ordering);
+  if (options.offerCategories) params.set('offer_categories', options.offerCategories);
+  if (options.investmentLevels) params.set('investment_levels', options.investmentLevels);
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : '';
