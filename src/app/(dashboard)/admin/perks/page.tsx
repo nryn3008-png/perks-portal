@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -8,40 +8,64 @@ import {
   MoreVertical,
   Pencil,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { Button, Input, Card } from '@/components/ui';
 import { formatPerkValue } from '@/lib/utils';
 import type { PerkListItem } from '@/types';
 
+const PAGE_SIZE = 50;
+
 /**
  * Admin Perks Management Page
  * STRICT: Uses real API data only. NO mock fallbacks.
+ * Pagination: Uses API-provided 'next' URL with "Load more" pattern.
  */
 export default function AdminPerksPage() {
   const [perks, setPerks] = useState<PerkListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    async function fetchPerks() {
+  const fetchPerks = useCallback(async (loadMore = false) => {
+    if (loadMore) {
+      setIsLoadingMore(true);
+    } else {
       setIsLoading(true);
       setError(null);
-
-      try {
-        const res = await fetch('/api/perks?pageSize=100');
-        if (!res.ok) throw new Error('Failed to fetch perks');
-
-        const data = await res.json();
-        setPerks(data.data || []);
-      } catch (err) {
-        console.error('Admin perks fetch error:', err);
-        setError('Unable to load perks. Please try again.');
-        setPerks([]);
-      } finally {
-        setIsLoading(false);
-      }
     }
 
+    try {
+      const url = loadMore && nextUrl
+        ? `/api/perks?next=${encodeURIComponent(nextUrl)}`
+        : `/api/perks?pageSize=${PAGE_SIZE}`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch perks');
+
+      const data = await res.json();
+
+      if (loadMore) {
+        setPerks((prev) => [...prev, ...(data.data || [])]);
+      } else {
+        setPerks(data.data || []);
+        setTotalCount(data.pagination?.count || 0);
+      }
+
+      setNextUrl(data.pagination?.next || null);
+    } catch (err) {
+      console.error('Admin perks fetch error:', err);
+      setError('Unable to load perks. Please try again.');
+      if (!loadMore) setPerks([]);
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [nextUrl]);
+
+  useEffect(() => {
     fetchPerks();
   }, []);
 
@@ -193,20 +217,28 @@ export default function AdminPerksPage() {
             </table>
           </div>
 
-          {/* Table footer with pagination */}
+          {/* Table footer with Load more */}
           <div className="flex items-center justify-between border-t border-slate-200 px-6 py-4">
             <p className="text-sm text-slate-500">
-              Showing {perks.length} perks
+              Showing {perks.length} of {totalCount} perks
             </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
+            {nextUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchPerks(true)}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load more'
+                )}
               </Button>
-              <Button variant="outline" size="sm" disabled>
-                Next
-              </Button>
-            </div>
-            {/* TODO: Implement pagination */}
+            )}
           </div>
         </Card>
       )}

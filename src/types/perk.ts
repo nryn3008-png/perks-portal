@@ -118,14 +118,13 @@ export interface PerkFilters {
 
 /**
  * Paginated response wrapper
+ * Uses API-provided next/previous URLs - NO client-side page calculation
  */
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-    hasMore: boolean;
+    count: number;        // Total count from API
+    next: string | null;  // API-provided next page URL
+    previous: string | null; // API-provided previous page URL
   };
 }

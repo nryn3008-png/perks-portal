@@ -4,21 +4,20 @@ import { perksService } from '@/lib/api';
 /**
  * GET /api/perks
  * Fetch paginated list of perks with optional filters
+ * Pagination: Use 'next' URL from response to load more (DO NOT calculate pages)
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
-  const page = parseInt(searchParams.get('page') || '1');
-  const pageSize = parseInt(searchParams.get('pageSize') || '12');
+  const pageSize = Math.min(parseInt(searchParams.get('pageSize') || '24'), 1000);
   const category = searchParams.get('category') || undefined;
   const search = searchParams.get('search') || undefined;
-  const featured = searchParams.get('featured') === 'true' || undefined;
+  const nextUrl = searchParams.get('next') || undefined;
 
-  const result = await perksService.getPerks(page, pageSize, {
+  const result = await perksService.getPerks(pageSize, {
     category,
     search,
-    featured,
-  });
+  }, nextUrl);
 
   if (!result.success) {
     return NextResponse.json(

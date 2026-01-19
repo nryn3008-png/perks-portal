@@ -52,19 +52,34 @@ export const perksService = {
   /**
    * Get paginated list of perks
    * Returns empty array if API fails - NO mock fallback
+   * Pagination uses API-provided next/previous URLs only
    */
   async getPerks(
-    page = 1,
-    pageSize = 12,
-    filters?: PerkFilters
+    pageSize = 24,
+    filters?: PerkFilters,
+    nextUrl?: string
   ): Promise<ApiResponse<PaginatedResponse<PerkListItem>>> {
     try {
-      const response = await getProvenClient.getDeals({
-        page,
-        pageSize,
-        search: filters?.search,
-        category: filters?.category,
-      });
+      let response;
+
+      if (nextUrl) {
+        // Fetch using the API-provided next URL directly
+        const res = await fetch(nextUrl, {
+          headers: {
+            Authorization: `Token ${process.env.GETPROVEN_API_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!res.ok) throw new Error('Failed to fetch next page');
+        response = await res.json();
+      } else {
+        // Initial fetch
+        response = await getProvenClient.getDeals({
+          pageSize,
+          search: filters?.search,
+          category: filters?.category,
+        });
+      }
 
       // Normalize all deals using the normalizer
       const perks = response.results.map(normalizeDealToListItem);
@@ -74,11 +89,9 @@ export const perksService = {
         data: {
           data: perks,
           pagination: {
-            page,
-            pageSize,
-            totalItems: response.count,
-            totalPages: Math.ceil(response.count / pageSize),
-            hasMore: response.next !== null,
+            count: response.count,
+            next: response.next,
+            previous: response.previous,
           },
         },
       };
@@ -91,11 +104,9 @@ export const perksService = {
         data: {
           data: [],
           pagination: {
-            page,
-            pageSize,
-            totalItems: 0,
-            totalPages: 0,
-            hasMore: false,
+            count: 0,
+            next: null,
+            previous: null,
           },
         },
       };
@@ -177,12 +188,12 @@ export const perksService = {
     totalPerks: number;
     totalValue: string;
   }> {
-    const result = await this.getPerks(1, 500);
+    const result = await this.getPerks(500);
     if (!result.success) {
       return { totalPerks: 0, totalValue: 'No data' };
     }
 
-    const totalPerks = result.data.pagination.totalItems;
+    const totalPerks = result.data.pagination.count;
 
     // Sum only explicit API values
     const totalAmount = result.data.data.reduce((sum, p) => {

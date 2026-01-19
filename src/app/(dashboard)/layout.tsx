@@ -4,23 +4,16 @@ import { AppShell } from '@/components/layout';
  * Dashboard Layout
  * Wraps all authenticated pages with the app shell (sidebar + header)
  *
- * Default: Founder view (isAdmin = false)
- * Admin features are hidden unless explicitly enabled
+ * ACCESS CONTROL:
+ * - In production, isAdmin would be determined by auth/session
+ * - Admin navigation is conditionally rendered based on isAdmin flag
  */
-
-// TODO: Replace with actual user data from auth
-const mockUser = {
-  name: 'Jane Founder',
-  email: 'jane@acme-startup.com',
-  role: 'founder' as const,
-};
 
 /**
- * Role flag for conditional UI rendering
- * Set to true to preview admin features during development
- * In production, this would come from auth/session
+ * Admin flag for UI rendering
+ * TODO: Replace with real auth check (e.g., session.user.role === 'admin')
  */
-const isAdmin = false;
+const isAdmin = true;
 
 export default function DashboardLayout({
   children,
@@ -28,7 +21,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppShell user={mockUser} isAdmin={isAdmin}>
+    <AppShell isAdmin={isAdmin}>
       {children}
     </AppShell>
   );

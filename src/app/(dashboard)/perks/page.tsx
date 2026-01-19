@@ -5,51 +5,35 @@
  * Fetches data from internal API routes (which proxy to GetProven)
  * STRICT: Real API data only. NO mock fallbacks.
  *
- * Category counts are DERIVED from actual perks data, not from raw API.
- * This ensures counts always match the number of displayable perks.
+ * Pagination: Uses API-provided 'next' URL with "Load more" pattern.
+ * DO NOT calculate pages client-side.
  */
 
 import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { SlidersHorizontal, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal, AlertCircle, Loader2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { PerksGrid, CategoryFilter } from '@/components/perks';
 import type { PerkListItem, PerkCategory } from '@/types';
 
-const PAGE_SIZE = 24; // Show 24 perks per page
-
-/**
- * Derive category counts from the actual perks list.
- * Counts how many perks exist per category slug.
- */
-function deriveCategoryCounts(perks: PerkListItem[]): Map<string, number> {
-  const counts = new Map<string, number>();
-  for (const perk of perks) {
-    const slug = perk.category?.slug;
-    if (slug) {
-      counts.set(slug, (counts.get(slug) || 0) + 1);
-    }
-  }
-  return counts;
-}
+const PAGE_SIZE = 24;
 
 function PerksPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [perks, setPerks] = useState<PerkListItem[]>([]);
-  const [allPerks, setAllPerks] = useState<PerkListItem[]>([]); // Unfiltered for counts
   const [categories, setCategories] = useState<PerkCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [totalCount, setTotalCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+  const [nextUrl, setNextUrl] = useState<string | null>(null);
 
   const categorySlug = searchParams.get('category') || undefined;
 
-  // Fetch categories (structure only, counts will be overridden)
+  // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch('/api/categories');
@@ -61,77 +45,64 @@ function PerksPageContent() {
     }
   }, []);
 
-  // Fetch ALL perks (with search filter only) to derive accurate category counts
-  const fetchAllPerksForCounts = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.set('search', searchQuery);
-      // No category filter - we want counts across all categories
-
-      const res = await fetch(`/api/perks?${params.toString()}`);
-      if (!res.ok) return;
-
-      const data = await res.json();
-      setAllPerks(data.data || []);
-    } catch (err) {
-      console.error('All perks fetch error:', err);
+  // Fetch perks with "Load more" pattern using API-provided next URL
+  const fetchPerks = useCallback(async (loadMore = false) => {
+    if (loadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+      setError(null);
     }
-  }, [searchQuery]);
-
-  // Fetch filtered perks for display with pagination
-  const fetchPerks = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
 
     try {
-      const params = new URLSearchParams();
-      params.set('page', String(currentPage));
-      params.set('pageSize', String(PAGE_SIZE));
-      if (categorySlug) params.set('category', categorySlug);
-      if (searchQuery) params.set('search', searchQuery);
+      let url: string;
 
-      const res = await fetch(`/api/perks?${params.toString()}`);
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch perks');
+      if (loadMore && nextUrl) {
+        url = `/api/perks?next=${encodeURIComponent(nextUrl)}`;
+      } else {
+        const params = new URLSearchParams();
+        params.set('pageSize', String(PAGE_SIZE));
+        if (categorySlug) params.set('category', categorySlug);
+        if (searchQuery) params.set('search', searchQuery);
+        url = `/api/perks?${params.toString()}`;
       }
 
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch perks');
+
       const data = await res.json();
-      setPerks(data.data || []);
-      setTotalCount(data.pagination?.totalItems || 0);
-      setTotalPages(data.pagination?.totalPages || 0);
+
+      if (loadMore) {
+        setPerks((prev) => [...prev, ...(data.data || [])]);
+      } else {
+        setPerks(data.data || []);
+        setTotalCount(data.pagination?.count || 0);
+      }
+
+      setNextUrl(data.pagination?.next || null);
     } catch (err) {
       console.error('Perks fetch error:', err);
       setError('Unable to load perks. Please try again.');
-      setPerks([]);
+      if (!loadMore) setPerks([]);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
-  }, [categorySlug, searchQuery, currentPage]);
-
-  // Derive category counts from allPerks (search-filtered, not category-filtered)
-  // This ensures counts reflect perks matching current search across ALL categories
-  const categoriesWithDerivedCounts = useMemo(() => {
-    const counts = deriveCategoryCounts(allPerks);
-    return categories.map((cat) => ({
-      ...cat,
-      perkCount: counts.get(cat.slug) || 0,
-    }));
-  }, [categories, allPerks]);
+  }, [categorySlug, searchQuery, nextUrl]);
 
   // Initial fetch
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Fetch perks when filters change
+  // Fetch perks when filters change (reset to first page)
   useEffect(() => {
-    fetchPerks();
-    fetchAllPerksForCounts();
-  }, [fetchPerks, fetchAllPerksForCounts]);
+    setPerks([]);
+    setNextUrl(null);
+    fetchPerks(false);
+  }, [categorySlug, searchQuery]);
 
   const handleCategorySelect = (slug: string | undefined) => {
-    setCurrentPage(1); // Reset to page 1 when category changes
     const params = new URLSearchParams(searchParams.toString());
     if (slug) {
       params.set('category', slug);
@@ -143,25 +114,11 @@ function PerksPageContent() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentPage(1); // Reset to page 1 when searching
   };
 
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleLoadMore = () => {
+    if (nextUrl && !isLoadingMore) {
+      fetchPerks(true);
     }
   };
 
@@ -202,9 +159,9 @@ function PerksPageContent() {
       </div>
 
       {/* Category Filter - only show if categories loaded */}
-      {categoriesWithDerivedCounts.length > 0 && (
+      {categories.length > 0 && (
         <CategoryFilter
-          categories={categoriesWithDerivedCounts}
+          categories={categories}
           selectedCategory={categorySlug}
           onSelect={handleCategorySelect}
         />
@@ -221,7 +178,7 @@ function PerksPageContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={fetchPerks}
+            onClick={() => fetchPerks(false)}
             className="ml-auto text-red-700 hover:bg-red-100"
           >
             Retry
@@ -253,32 +210,35 @@ function PerksPageContent() {
           }
         />
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && !isLoading && (
-          <div className="flex items-center justify-between border-t border-slate-200 pt-6">
+        {/* Load More Button */}
+        {nextUrl && !isLoading && (
+          <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6">
             <p className="text-sm text-slate-500">
-              Page {currentPage} of {totalPages} ({totalCount} perks)
+              Showing {perks.length} of {totalCount} perks
             </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-              >
-                Next
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Load more'
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Show count when all loaded */}
+        {!nextUrl && !isLoading && perks.length > 0 && (
+          <div className="flex justify-center border-t border-slate-200 pt-6">
+            <p className="text-sm text-slate-500">
+              Showing all {perks.length} perks
+            </p>
           </div>
         )}
       </div>
