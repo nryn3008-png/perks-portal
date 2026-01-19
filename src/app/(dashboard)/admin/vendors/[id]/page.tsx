@@ -18,14 +18,15 @@ import {
   Mail,
   BadgeCheck,
   User,
+  Shield,
 } from 'lucide-react';
 import { Badge, Card, CardContent } from '@/components/ui';
 import { vendorsService } from '@/lib/api';
 import type { GetProvenVendor, VendorClient, VendorUser } from '@/types';
 
 /**
- * Vendor Detail Page
- * STRICT: Uses ONLY GetProven API data
+ * Admin Vendor Detail Page
+ * ADMIN ONLY: View vendor details from GetProven API
  *
  * VENDOR PROFILE: name, logo, description, story, website, video, brochure,
  * services, industries, employee range, founded, social links
@@ -38,7 +39,7 @@ import type { GetProvenVendor, VendorClient, VendorUser } from '@/types';
  * NO phone numbers exposed
  */
 
-interface VendorDetailPageProps {
+interface AdminVendorDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
@@ -71,7 +72,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
   return url;
 }
 
-export default async function VendorDetailPage({ params }: VendorDetailPageProps) {
+export default async function AdminVendorDetailPage({ params }: AdminVendorDetailPageProps) {
   const { id } = await params;
 
   // Fetch all vendor data in parallel
@@ -97,9 +98,20 @@ export default async function VendorDetailPage({ params }: VendorDetailPageProps
 
   return (
     <div className="mx-auto max-w-5xl">
+      {/* Admin Header */}
+      <div className="mb-6 flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4">
+        <Shield className="h-5 w-5 text-amber-600" />
+        <div>
+          <h2 className="font-semibold text-amber-900">Admin Only</h2>
+          <p className="text-sm text-amber-700">
+            Viewing vendor details as an administrator
+          </p>
+        </div>
+      </div>
+
       {/* Back navigation */}
       <Link
-        href="/vendors"
+        href="/admin/vendors"
         className="mb-8 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />

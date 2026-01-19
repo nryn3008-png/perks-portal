@@ -1,19 +1,17 @@
 'use client';
 
 /**
- * Vendors Directory Page
+ * Admin Vendors Page
  *
- * STRICT: Uses ONLY GetProven API data
+ * ADMIN ONLY: Manage vendors via GetProven API
  * - Fetches from /vendors/ with page and page_size
  * - Load more using API-provided 'next' URL
  * - Stop fetching when next is null
  * - Filter by search, service_name, group_name
- * - Filter values derived dynamically from API responses
- * - NO ratings, reviews, or popularity indicators
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X, Search } from 'lucide-react';
+import { AlertCircle, Loader2, Filter, X, Search, Shield } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { VendorsGrid } from '@/components/vendors';
 import type { GetProvenVendor } from '@/types';
@@ -31,7 +29,7 @@ interface ActiveFilters {
   groupName: string;
 }
 
-function VendorsPageContent() {
+function AdminVendorsPageContent() {
   // Data state
   const [vendors, setVendors] = useState<GetProvenVendor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -167,12 +165,23 @@ function VendorsPageContent() {
 
   return (
     <div className="space-y-6">
+      {/* Admin Header */}
+      <div className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4">
+        <Shield className="h-5 w-5 text-amber-600" />
+        <div>
+          <h2 className="font-semibold text-amber-900">Admin Only</h2>
+          <p className="text-sm text-amber-700">
+            This page is restricted to administrators
+          </p>
+        </div>
+      </div>
+
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Vendors Directory</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Vendors Management</h1>
           <p className="text-slate-600">
-            Explore trusted vendors and service providers
+            View and manage vendor information
           </p>
         </div>
 
@@ -328,6 +337,7 @@ function VendorsPageContent() {
           vendors={vendors}
           isLoading={isLoading}
           emptyMessage="No vendors found"
+          basePath="/admin/vendors"
         />
 
         {/* Load More Button */}
@@ -369,9 +379,10 @@ function VendorsPageContent() {
 /**
  * Loading fallback
  */
-function VendorsPageLoading() {
+function AdminVendorsPageLoading() {
   return (
     <div className="space-y-6">
+      <div className="h-16 animate-pulse rounded-lg bg-amber-50" />
       <div>
         <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
         <div className="mt-2 h-5 w-64 animate-pulse rounded bg-slate-100" />
@@ -385,10 +396,10 @@ function VendorsPageLoading() {
   );
 }
 
-export default function VendorsPage() {
+export default function AdminVendorsPage() {
   return (
-    <Suspense fallback={<VendorsPageLoading />}>
-      <VendorsPageContent />
+    <Suspense fallback={<AdminVendorsPageLoading />}>
+      <AdminVendorsPageContent />
     </Suspense>
   );
 }

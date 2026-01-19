@@ -17,6 +17,7 @@ import type { GetProvenVendor } from '@/types';
 
 interface VendorCardProps {
   vendor: GetProvenVendor;
+  basePath?: string;
 }
 
 /**
@@ -53,13 +54,13 @@ function formatEmployeeRange(min: number | null, max: number | null): string | n
   return null;
 }
 
-export function VendorCard({ vendor }: VendorCardProps) {
+export function VendorCard({ vendor, basePath = '/admin/vendors' }: VendorCardProps) {
   const description = truncate(stripHtml(vendor.description || ''), 120);
   const employeeRange = formatEmployeeRange(vendor.employee_min, vendor.employee_max);
 
   return (
     <Link
-      href={`/vendors/${vendor.id}`}
+      href={`${basePath}/${vendor.id}`}
       className="block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
     >
       <Card hover className="h-full">

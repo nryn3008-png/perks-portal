@@ -12,12 +12,14 @@ interface VendorsGridProps {
   vendors: GetProvenVendor[];
   isLoading?: boolean;
   emptyMessage?: string;
+  basePath?: string;
 }
 
 export function VendorsGrid({
   vendors,
   isLoading = false,
   emptyMessage = 'No vendors found',
+  basePath = '/admin/vendors',
 }: VendorsGridProps) {
   // Loading state
   if (isLoading) {
@@ -47,7 +49,7 @@ export function VendorsGrid({
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {vendors.map((vendor) => (
-        <VendorCard key={vendor.id} vendor={vendor} />
+        <VendorCard key={vendor.id} vendor={vendor} basePath={basePath} />
       ))}
     </div>
   );
