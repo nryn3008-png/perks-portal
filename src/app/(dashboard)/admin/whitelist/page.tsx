@@ -265,6 +265,9 @@ function WhitelistPageContent() {
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-900">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-900">
                     Domain
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-900">
@@ -281,6 +284,9 @@ function WhitelistPageContent() {
               <tbody className="divide-y divide-slate-100">
                 {domains.map((domain) => (
                   <tr key={domain.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-sm font-mono text-slate-600">
+                      {domain.id}
+                    </td>
                     <td className="px-4 py-3 text-sm font-medium text-slate-900">
                       {domain.domain}
                     </td>

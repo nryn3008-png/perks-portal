@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 import { Badge, Card, CardContent } from '@/components/ui';
 import { CopyButton } from '@/components/perks';
-import { perksService } from '@/lib/api';
-import type { GetProvenDeal } from '@/types';
+import { perksService, vendorsService } from '@/lib/api';
+import type { GetProvenDeal, GetProvenVendor } from '@/types';
+import { Building2, Globe, Hash, Database } from 'lucide-react';
 
 /**
  * Offer Detail Page
@@ -82,6 +83,15 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
   const discountDisplay = formatDiscount(offer.discount, offer.discount_type);
   const showRedemption = hasRedemptionDetails(offer);
   const hasTerms = offer.terms_and_conditions_text || offer.terms_and_conditions;
+
+  // Fetch vendor data if vendor_id exists
+  let vendor: GetProvenVendor | null = null;
+  if (offer.vendor_id) {
+    const vendorResult = await vendorsService.getVendorById(String(offer.vendor_id));
+    if (vendorResult.success && vendorResult.data) {
+      vendor = vendorResult.data;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -290,6 +300,250 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               </Card>
             </section>
           )}
+
+          {/* Vendor Information Section */}
+          {vendor && (
+            <section aria-labelledby="vendor-heading">
+              <h2
+                id="vendor-heading"
+                className="text-lg font-semibold text-slate-900 mb-4"
+              >
+                <Building2 className="inline-block h-5 w-5 mr-2 text-slate-400" />
+                Vendor Information
+              </h2>
+              <Card className="border-slate-200">
+                <CardContent className="p-5 sm:p-6">
+                  <div className="flex items-start gap-4">
+                    {/* Vendor Logo */}
+                    {vendor.logo ? (
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                        <Image
+                          src={vendor.logo}
+                          alt=""
+                          width={56}
+                          height={56}
+                          className="h-full w-full object-contain"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                        <Building2 className="h-7 w-7 text-slate-400" />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      {/* Vendor Name */}
+                      <h3 className="text-base font-semibold text-slate-900">
+                        {vendor.name}
+                      </h3>
+
+                      {/* Vendor ID */}
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Vendor ID: {vendor.id}
+                      </p>
+
+                      {/* Vendor Website */}
+                      {vendor.website && (
+                        <a
+                          href={vendor.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 mt-2 text-sm text-brand-600 hover:text-brand-700 hover:underline"
+                        >
+                          <Globe className="h-4 w-4" />
+                          {vendor.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                        </a>
+                      )}
+
+                      {/* Primary Service */}
+                      {vendor.primary_service && (
+                        <p className="text-sm text-slate-600 mt-2">
+                          {vendor.primary_service}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* API Data Section - Shows all raw offer fields */}
+          <section aria-labelledby="api-data-heading">
+            <h2
+              id="api-data-heading"
+              className="text-lg font-semibold text-slate-900 mb-4"
+            >
+              <Database className="inline-block h-5 w-5 mr-2 text-slate-400" />
+              All Offer Data (API)
+            </h2>
+            <Card className="border-slate-200">
+              <CardContent className="p-5 sm:p-6">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  {/* Offer ID */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Offer ID</dt>
+                    <dd className="text-slate-900 font-mono">{offer.id}</dd>
+                  </div>
+
+                  {/* Vendor ID */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Vendor ID</dt>
+                    <dd className="text-slate-900 font-mono">{offer.vendor_id}</dd>
+                  </div>
+
+                  {/* Deal Type */}
+                  {offer.deal_type && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Deal Type</dt>
+                      <dd className="text-slate-900">{offer.deal_type}</dd>
+                    </div>
+                  )}
+
+                  {/* Estimated Value Type */}
+                  {offer.estimated_value_type && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Estimated Value Type</dt>
+                      <dd className="text-slate-900">{offer.estimated_value_type}</dd>
+                    </div>
+                  )}
+
+                  {/* Estimated Value */}
+                  {offer.estimated_value !== null && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Estimated Value</dt>
+                      <dd className="text-slate-900">${offer.estimated_value?.toLocaleString()}</dd>
+                    </div>
+                  )}
+
+                  {/* Old Price */}
+                  {offer.old_price !== null && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Old Price</dt>
+                      <dd className="text-slate-900">${offer.old_price?.toLocaleString()}</dd>
+                    </div>
+                  )}
+
+                  {/* New Price */}
+                  {offer.new_price !== null && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">New Price</dt>
+                      <dd className="text-slate-900">${offer.new_price?.toLocaleString()}</dd>
+                    </div>
+                  )}
+
+                  {/* Discount */}
+                  {offer.discount !== null && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Discount</dt>
+                      <dd className="text-slate-900">
+                        {offer.discount}{offer.discount_type === 'percentage' ? '%' : ''}
+                        {offer.discount_type && ` (${offer.discount_type})`}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Applicable To Type */}
+                  {offer.applicable_to_type && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Applicable To</dt>
+                      <dd className="text-slate-900">{offer.applicable_to_type}</dd>
+                    </div>
+                  )}
+
+                  {/* Offer Categories */}
+                  {offer.offer_categories.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Offer Categories</dt>
+                      <dd className="flex flex-wrap gap-1 mt-1">
+                        {offer.offer_categories.map((cat, idx) => (
+                          <Badge key={idx} variant="default">{cat.name}</Badge>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Investment Levels */}
+                  {offer.investment_levels.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Investment Levels</dt>
+                      <dd className="flex flex-wrap gap-1 mt-1">
+                        {offer.investment_levels.map((level, idx) => (
+                          <Badge key={idx} variant="info">{level.name}</Badge>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* GetProven Link */}
+                  <div className="sm:col-span-2">
+                    <dt className="text-slate-500 font-medium">GetProven Link</dt>
+                    <dd>
+                      <a
+                        href={offer.getproven_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-600 hover:text-brand-700 hover:underline break-all"
+                      >
+                        {offer.getproven_link}
+                      </a>
+                    </dd>
+                  </div>
+
+                  {/* Terms and Conditions URL */}
+                  {offer.terms_and_conditions && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Terms URL</dt>
+                      <dd>
+                        <a
+                          href={offer.terms_and_conditions}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:text-brand-700 hover:underline break-all"
+                        >
+                          {offer.terms_and_conditions}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Coupon Code */}
+                  {offer.coupon_code && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Coupon Code</dt>
+                      <dd className="font-mono text-slate-900">{offer.coupon_code}</dd>
+                    </div>
+                  )}
+
+                  {/* Contact Email */}
+                  {offer.contact_email && (
+                    <div>
+                      <dt className="text-slate-500 font-medium">Contact Email</dt>
+                      <dd className="text-slate-900">{offer.contact_email}</dd>
+                    </div>
+                  )}
+
+                  {/* Details URL */}
+                  {offer.details_url && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Details URL</dt>
+                      <dd>
+                        <a
+                          href={offer.details_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:text-brand-700 hover:underline break-all"
+                        >
+                          {offer.details_url}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          </section>
         </div>
 
         {/* Redemption Sidebar */}

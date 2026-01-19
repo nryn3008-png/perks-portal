@@ -19,6 +19,12 @@ import {
   BadgeCheck,
   User,
   Shield,
+  Database,
+  Eye,
+  EyeOff,
+  Link as LinkIcon,
+  Phone,
+  Hash,
 } from 'lucide-react';
 import { Badge, Card, CardContent } from '@/components/ui';
 import { vendorsService } from '@/lib/api';
@@ -76,10 +82,11 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
   const { id } = await params;
 
   // Fetch all vendor data in parallel
-  const [vendorResult, clientsResult, contactsResult] = await Promise.all([
+  const [vendorResult, clientsResult, contactsResult, allUsersResult] = await Promise.all([
     vendorsService.getVendorById(id),
     vendorsService.getVendorClients(id),
     vendorsService.getVendorContacts(id),
+    vendorsService.getAllVendorUsers(id),
   ]);
 
   if (!vendorResult.success || !vendorResult.data) {
@@ -89,11 +96,13 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
   const vendor = vendorResult.data;
   const clients = clientsResult.success ? clientsResult.data : [];
   const contacts = contactsResult.success ? contactsResult.data : [];
+  const allUsers = allUsersResult.success ? allUsersResult.data : [];
 
   const employeeRange = formatEmployeeRange(vendor.employee_min, vendor.employee_max);
   const hasSocialLinks = vendor.linkedin || vendor.facebook || vendor.twitter;
   const hasClients = clients.length > 0;
   const hasContacts = contacts.length > 0;
+  const hasAllUsers = allUsers.length > 0;
   const videoEmbedUrl = vendor.video ? getYouTubeEmbedUrl(vendor.video) : null;
 
   return (
@@ -356,6 +365,439 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
               )}
             </section>
           )}
+
+          {/* Full Clients Data (API) - Admin only */}
+          {hasClients && (
+            <section aria-labelledby="clients-data-heading">
+              <h2
+                id="clients-data-heading"
+                className="text-lg font-semibold text-slate-900 mb-4"
+              >
+                <Database className="inline-block h-5 w-5 mr-2 text-slate-400" />
+                All Clients Data (API)
+              </h2>
+              <Card className="border-slate-200">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-slate-900">ID</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Name</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Logo</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Description</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Verified</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {clients.map((client) => (
+                          <tr key={client.id} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-mono text-slate-600">{client.id}</td>
+                            <td className="px-4 py-3 font-medium text-slate-900">{client.name}</td>
+                            <td className="px-4 py-3">
+                              {client.logo ? (
+                                <a href={client.logo} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline truncate block max-w-[150px]">
+                                  {client.logo.split('/').pop()}
+                                </a>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate">
+                              {client.description || <span className="text-slate-400">-</span>}
+                            </td>
+                            <td className="px-4 py-3">
+                              {client.verified ? (
+                                <Badge variant="success">true</Badge>
+                              ) : (
+                                <Badge variant="default">false</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* All Users/Contacts (Unfiltered) - Admin only */}
+          {hasAllUsers && (
+            <section aria-labelledby="users-data-heading">
+              <h2
+                id="users-data-heading"
+                className="text-lg font-semibold text-slate-900 mb-4"
+              >
+                <User className="inline-block h-5 w-5 mr-2 text-slate-400" />
+                All Vendor Users (API - Unfiltered)
+              </h2>
+              <Card className="border-slate-200">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold text-slate-900">ID</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Name</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Email</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Phone</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Position</th>
+                          <th className="px-4 py-3 font-semibold text-slate-900">Roles</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {allUsers.map((user) => (
+                          <tr key={user.id} className="hover:bg-slate-50">
+                            <td className="px-4 py-3 font-mono text-slate-600">{user.id}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                {user.avatar ? (
+                                  <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-slate-100">
+                                    <Image
+                                      src={user.avatar}
+                                      alt=""
+                                      width={32}
+                                      height={32}
+                                      className="h-full w-full object-cover"
+                                      unoptimized
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-100">
+                                    <User className="h-4 w-4 text-slate-400" />
+                                  </div>
+                                )}
+                                <span className="font-medium text-slate-900">
+                                  {user.first_name} {user.last_name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">{user.email}</td>
+                            <td className="px-4 py-3">
+                              {user.phone ? (
+                                <span className="flex items-center gap-1 text-slate-600">
+                                  <Phone className="h-3 w-3" />
+                                  {user.phone}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">
+                              {user.position || <span className="text-slate-400">-</span>}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {user.roles.map((role, idx) => (
+                                  <Badge key={idx} variant="info" className="text-xs">
+                                    {role}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {/* Visibility Flags - Admin only */}
+          <section aria-labelledby="visibility-heading">
+            <h2
+              id="visibility-heading"
+              className="text-lg font-semibold text-slate-900 mb-4"
+            >
+              {vendor.is_visible ? (
+                <Eye className="inline-block h-5 w-5 mr-2 text-slate-400" />
+              ) : (
+                <EyeOff className="inline-block h-5 w-5 mr-2 text-slate-400" />
+              )}
+              Visibility Flags
+            </h2>
+            <Card className="border-slate-200">
+              <CardContent className="p-5 sm:p-6">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <dt className="text-slate-500 font-medium">is_visible</dt>
+                    <dd className="mt-1">
+                      {vendor.is_visible ? (
+                        <Badge variant="success">true</Badge>
+                      ) : (
+                        <Badge variant="error">false</Badge>
+                      )}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500 font-medium">is_visible_non_whitelisted</dt>
+                    <dd className="mt-1">
+                      {vendor.is_visible_non_whitelisted ? (
+                        <Badge variant="success">true</Badge>
+                      ) : (
+                        <Badge variant="error">false</Badge>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* External Links / Marketing Assets - Admin only */}
+          <section aria-labelledby="links-heading">
+            <h2
+              id="links-heading"
+              className="text-lg font-semibold text-slate-900 mb-4"
+            >
+              <LinkIcon className="inline-block h-5 w-5 mr-2 text-slate-400" />
+              External Links & Marketing Assets
+            </h2>
+            <Card className="border-slate-200">
+              <CardContent className="p-5 sm:p-6">
+                <dl className="space-y-4 text-sm">
+                  {/* Website */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Website</dt>
+                    <dd className="mt-1">
+                      {vendor.website ? (
+                        <a
+                          href={vendor.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline break-all"
+                        >
+                          {vendor.website}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+
+                  {/* GetProven Link */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">GetProven Link</dt>
+                    <dd className="mt-1">
+                      <a
+                        href={vendor.getproven_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-600 hover:underline break-all"
+                      >
+                        {vendor.getproven_link}
+                      </a>
+                    </dd>
+                  </div>
+
+                  {/* Brochure */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Brochure</dt>
+                    <dd className="mt-1">
+                      {vendor.brochure ? (
+                        <a
+                          href={vendor.brochure}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline break-all"
+                        >
+                          {vendor.brochure}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+
+                  {/* Video */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Video</dt>
+                    <dd className="mt-1">
+                      {vendor.video ? (
+                        <a
+                          href={vendor.video}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline break-all"
+                        >
+                          {vendor.video}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+
+                  {/* LinkedIn */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">LinkedIn</dt>
+                    <dd className="mt-1">
+                      {vendor.linkedin ? (
+                        <a
+                          href={vendor.linkedin.startsWith('http') ? vendor.linkedin : `https://linkedin.com/company/${vendor.linkedin}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline break-all"
+                        >
+                          {vendor.linkedin}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+
+                  {/* Facebook */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Facebook</dt>
+                    <dd className="mt-1">
+                      {vendor.facebook ? (
+                        <a
+                          href={vendor.facebook.startsWith('http') ? vendor.facebook : `https://facebook.com/${vendor.facebook}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline break-all"
+                        >
+                          {vendor.facebook}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+
+                  {/* Twitter */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Twitter</dt>
+                    <dd className="mt-1">
+                      {vendor.twitter ? (
+                        <a
+                          href={vendor.twitter.startsWith('http') ? vendor.twitter : `https://twitter.com/${vendor.twitter}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-600 hover:underline break-all"
+                        >
+                          {vendor.twitter}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* All Vendor Data (API) */}
+          <section aria-labelledby="vendor-api-data-heading">
+            <h2
+              id="vendor-api-data-heading"
+              className="text-lg font-semibold text-slate-900 mb-4"
+            >
+              <Database className="inline-block h-5 w-5 mr-2 text-slate-400" />
+              All Vendor Data (API)
+            </h2>
+            <Card className="border-slate-200">
+              <CardContent className="p-5 sm:p-6">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  {/* ID */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">ID</dt>
+                    <dd className="text-slate-900 font-mono">{vendor.id}</dd>
+                  </div>
+
+                  {/* Slug */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Slug</dt>
+                    <dd className="text-slate-900 font-mono">{vendor.slug}</dd>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Name</dt>
+                    <dd className="text-slate-900">{vendor.name}</dd>
+                  </div>
+
+                  {/* Primary Service */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Primary Service</dt>
+                    <dd className="text-slate-900">{vendor.primary_service || <span className="text-slate-400">-</span>}</dd>
+                  </div>
+
+                  {/* Founded */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Founded</dt>
+                    <dd className="text-slate-900">{vendor.founded || <span className="text-slate-400">-</span>}</dd>
+                  </div>
+
+                  {/* Employee Range */}
+                  <div>
+                    <dt className="text-slate-500 font-medium">Employee Range</dt>
+                    <dd className="text-slate-900">
+                      {vendor.employee_min !== null || vendor.employee_max !== null ? (
+                        <>min: {vendor.employee_min ?? 'null'}, max: {vendor.employee_max ?? 'null'}</>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
+                    </dd>
+                  </div>
+
+                  {/* Services */}
+                  {vendor.services.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Services</dt>
+                      <dd className="flex flex-wrap gap-1 mt-1">
+                        {vendor.services.map((s, idx) => (
+                          <Badge key={idx} variant="default">{s.name}</Badge>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Industries */}
+                  {vendor.industries.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Industries</dt>
+                      <dd className="flex flex-wrap gap-1 mt-1">
+                        {vendor.industries.map((i, idx) => (
+                          <Badge key={idx} variant="info">{i.name}</Badge>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Vendor Groups */}
+                  {vendor.vendor_groups.length > 0 && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Vendor Groups</dt>
+                      <dd className="flex flex-wrap gap-1 mt-1">
+                        {vendor.vendor_groups.map((g, idx) => (
+                          <Badge key={idx} variant="success">{g.name}</Badge>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
+
+                  {/* Logo URL */}
+                  {vendor.logo && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-slate-500 font-medium">Logo URL</dt>
+                      <dd>
+                        <a href={vendor.logo} target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline break-all">
+                          {vendor.logo}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </CardContent>
+            </Card>
+          </section>
         </div>
 
         {/* Sidebar */}

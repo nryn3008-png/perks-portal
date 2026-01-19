@@ -251,4 +251,18 @@ export const vendorsService = {
       return { success: true, data: [] };
     }
   },
+
+  /**
+   * Get ALL vendor users/contacts without filtering
+   * Admin-only: Returns raw API data including all roles, phone numbers
+   */
+  async getAllVendorUsers(vendorId: string): Promise<ApiResponse<VendorUser[]>> {
+    try {
+      const response = await getProvenClient.getVendorUsers(vendorId);
+      return { success: true, data: response.results };
+    } catch (error) {
+      logApiError('getAllVendorUsers', error);
+      return { success: true, data: [] };
+    }
+  },
 };

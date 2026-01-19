@@ -154,6 +154,9 @@ function IndividualAccessPageContent() {
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-900">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-sm font-semibold text-slate-900">
                     Email
                   </th>
                   <th className="px-4 py-3 text-sm font-semibold text-slate-900">
@@ -167,6 +170,9 @@ function IndividualAccessPageContent() {
               <tbody className="divide-y divide-slate-100">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3 text-sm font-mono text-slate-600">
+                      {user.id}
+                    </td>
                     <td className="px-4 py-3 text-sm font-medium text-slate-900">
                       {user.email}
                     </td>
