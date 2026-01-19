@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Admin index page - redirects to perks management
+ * Admin index page - redirects to whitelisted domains
  */
 export default function AdminPage() {
-  redirect('/admin/perks');
+  redirect('/admin/whitelist');
 }

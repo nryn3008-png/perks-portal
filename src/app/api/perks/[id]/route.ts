@@ -3,14 +3,14 @@ import { perksService } from '@/lib/api';
 
 /**
  * GET /api/perks/[id]
- * Fetch single perk by ID or slug
+ * Fetch single offer by ID from GetProven API
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const result = await perksService.getPerk(id);
+  const result = await perksService.getOfferById(id);
 
   if (!result.success) {
     return NextResponse.json(

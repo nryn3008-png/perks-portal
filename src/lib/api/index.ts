@@ -8,6 +8,8 @@
  */
 
 export { perksService } from './perks-service';
+export { vendorsService } from './vendors-service';
+export { whitelistService } from './whitelist-service';
 export { getProvenClient, GetProvenApiError } from './getproven-client';
 
 // Re-export normalizers for advanced use cases

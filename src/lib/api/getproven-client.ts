@@ -11,8 +11,14 @@ import {
   ApiError,
   GetProvenDeal,
   GetProvenCategory,
+  GetProvenVendor,
+  VendorClient,
+  VendorUser,
+  WhitelistDomain,
+  IndividualAccess,
   GetProvenListResponse,
   ApiRequestOptions,
+  VendorRequestOptions,
 } from '@/types';
 
 const API_BASE_URL =
@@ -44,7 +50,7 @@ export class GetProvenApiError extends Error {
 }
 
 /**
- * Build query string from options
+ * Build query string from offer options
  */
 function buildQueryString(options: ApiRequestOptions): string {
   const params = new URLSearchParams();
@@ -54,6 +60,22 @@ function buildQueryString(options: ApiRequestOptions): string {
   if (options.search) params.set('search', options.search);
   if (options.offerCategories) params.set('offer_categories', options.offerCategories);
   if (options.investmentLevels) params.set('investment_levels', options.investmentLevels);
+
+  const queryString = params.toString();
+  return queryString ? `?${queryString}` : '';
+}
+
+/**
+ * Build query string from vendor options
+ */
+function buildVendorQueryString(options: VendorRequestOptions): string {
+  const params = new URLSearchParams();
+
+  if (options.page) params.set('page', String(options.page));
+  if (options.pageSize) params.set('page_size', String(Math.min(options.pageSize, 1000)));
+  if (options.search) params.set('search', options.search);
+  if (options.serviceName) params.set('service_name', options.serviceName);
+  if (options.groupName) params.set('group_name', options.groupName);
 
   const queryString = params.toString();
   return queryString ? `?${queryString}` : '';
@@ -134,17 +156,108 @@ export const getProvenClient = {
 
   /**
    * Fetch deals by category
+   * Uses offer_categories filter parameter
    */
   async getDealsByCategory(
-    categorySlug: string,
+    categoryName: string,
     options: ApiRequestOptions = {}
   ): Promise<GetProvenListResponse<GetProvenDeal>> {
-    const query = buildQueryString({ ...options, category: categorySlug });
+    const query = buildQueryString({ ...options, offerCategories: categoryName });
     return makeRequest<GetProvenListResponse<GetProvenDeal>>(`/offers/${query}`);
   },
 
-  // TODO: Add more endpoints as discovered from API documentation
-  // - /redeem/ - Track redemptions
-  // - /portfolio/ - Portfolio company info
-  // - /analytics/ - Usage analytics
+  /**
+   * Fetch list of vendors
+   */
+  async getVendors(
+    options: VendorRequestOptions = {}
+  ): Promise<GetProvenListResponse<GetProvenVendor>> {
+    const query = buildVendorQueryString(options);
+    return makeRequest<GetProvenListResponse<GetProvenVendor>>(`/vendors/${query}`);
+  },
+
+  /**
+   * Fetch vendor clients
+   */
+  async getVendorClients(
+    vendorId: string,
+    pageSize = 50
+  ): Promise<GetProvenListResponse<VendorClient>> {
+    return makeRequest<GetProvenListResponse<VendorClient>>(
+      `/vendors/${vendorId}/clients/?page_size=${pageSize}`
+    );
+  },
+
+  /**
+   * Fetch vendor users/contacts
+   */
+  async getVendorUsers(
+    vendorId: string
+  ): Promise<GetProvenListResponse<VendorUser>> {
+    return makeRequest<GetProvenListResponse<VendorUser>>(
+      `/vendors/${vendorId}/users/`
+    );
+  },
+
+  /**
+   * Fetch whitelisted domains
+   */
+  async getWhitelistDomains(
+    page = 1,
+    pageSize = 50
+  ): Promise<GetProvenListResponse<WhitelistDomain>> {
+    return makeRequest<GetProvenListResponse<WhitelistDomain>>(
+      `/whitelist/domains/?page=${page}&page_size=${pageSize}`
+    );
+  },
+
+  /**
+   * Fetch individual access list
+   */
+  async getIndividualAccess(
+    page = 1,
+    pageSize = 50
+  ): Promise<GetProvenListResponse<IndividualAccess>> {
+    return makeRequest<GetProvenListResponse<IndividualAccess>>(
+      `/whitelist/individual_access/?page=${page}&page_size=${pageSize}`
+    );
+  },
+
+  /**
+   * Upload whitelist domains CSV
+   * Returns raw API response
+   */
+  async uploadWhitelistCsv(formData: FormData): Promise<unknown> {
+    if (!API_TOKEN) {
+      throw new GetProvenApiError(
+        'MISSING_API_TOKEN',
+        'GetProven API token is not configured',
+        500
+      );
+    }
+
+    const url = `${API_BASE_URL}/whitelist/domain/upload/`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Token ${API_TOKEN}`,
+        // Don't set Content-Type - browser will set it with boundary for FormData
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new GetProvenApiError(
+        'UPLOAD_ERROR',
+        data.detail || data.error || 'Upload failed',
+        response.status,
+        data
+      );
+    }
+
+    return data;
+  },
 };

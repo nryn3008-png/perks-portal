@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Bell, User, LogOut, Settings, Shield } from 'lucide-react';
+import { Search, User, LogOut, Settings, Shield } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -46,16 +46,13 @@ export function Header({ user, isAdmin = false }: HeaderProps) {
 
       {/* Right side actions */}
       <div className="flex items-center gap-4">
-        {/* Notifications */}
-        <button
+        {/* Notifications - hidden until connected to real notification data */}
+        {/* <button
           className="relative rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
-          {/* Notification badge */}
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-          {/* TODO: Implement notifications */}
-        </button>
+        </button> */}
 
         {/* User menu */}
         <div className="relative">
@@ -84,14 +81,20 @@ export function Header({ user, isAdmin = false }: HeaderProps) {
                 onClick={() => setShowUserMenu(false)}
               />
               <div className="absolute right-0 z-50 mt-2 w-56 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                <div className="border-b border-slate-100 px-4 py-3">
-                  <p className="text-sm font-medium text-slate-900">
-                    {user?.name || 'User'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {user?.email || 'user@example.com'}
-                  </p>
-                </div>
+                {(user?.name || user?.email) && (
+                  <div className="border-b border-slate-100 px-4 py-3">
+                    {user?.name && (
+                      <p className="text-sm font-medium text-slate-900">
+                        {user.name}
+                      </p>
+                    )}
+                    {user?.email && (
+                      <p className="text-xs text-slate-500">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="py-1">
                   <button

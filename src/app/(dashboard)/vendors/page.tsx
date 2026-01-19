@@ -1,39 +1,39 @@
 'use client';
 
 /**
- * Perks (Offers) Listing Page
+ * Vendors Directory Page
  *
  * STRICT: Uses ONLY GetProven API data
- * - Fetches from /offers/ with page and page_size
+ * - Fetches from /vendors/ with page and page_size
  * - Load more using API-provided 'next' URL
  * - Stop fetching when next is null
- * - Filter by offer_categories and investment_levels (comma-separated)
+ * - Filter by search, service_name, group_name
  * - Filter values derived dynamically from API responses
- * - NO hardcoded filter options
- * - NO claimed/redeemed/expiry/popularity indicators
+ * - NO ratings, reviews, or popularity indicators
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X } from 'lucide-react';
+import { AlertCircle, Loader2, Filter, X, Search } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
-import { OffersGrid } from '@/components/perks';
-import type { GetProvenDeal } from '@/types';
+import { VendorsGrid } from '@/components/vendors';
+import type { GetProvenVendor } from '@/types';
 
 const PAGE_SIZE = 24;
 
 interface FilterOptions {
-  offerCategories: string[];
-  investmentLevels: string[];
+  services: string[];
+  vendorGroups: string[];
 }
 
 interface ActiveFilters {
-  offerCategories: string[];
-  investmentLevels: string[];
+  search: string;
+  serviceName: string;
+  groupName: string;
 }
 
-function PerksPageContent() {
+function VendorsPageContent() {
   // Data state
-  const [offers, setOffers] = useState<GetProvenDeal[]>([]);
+  const [vendors, setVendors] = useState<GetProvenVendor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,19 +42,21 @@ function PerksPageContent() {
 
   // Filter state
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    offerCategories: [],
-    investmentLevels: [],
+    services: [],
+    vendorGroups: [],
   });
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
-    offerCategories: [],
-    investmentLevels: [],
+    search: '',
+    serviceName: '',
+    groupName: '',
   });
+  const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch filter options from API (derived dynamically)
+  // Fetch filter options from API
   const fetchFilterOptions = useCallback(async () => {
     try {
-      const res = await fetch('/api/perks/filters');
+      const res = await fetch('/api/vendors/filters');
       if (!res.ok) return;
       const data = await res.json();
       setFilterOptions(data);
@@ -63,8 +65,8 @@ function PerksPageContent() {
     }
   }, []);
 
-  // Fetch offers with "Load more" pattern
-  const fetchOffers = useCallback(async (loadMore = false) => {
+  // Fetch vendors with "Load more" pattern
+  const fetchVendors = useCallback(async (loadMore = false) => {
     if (loadMore) {
       setIsLoadingMore(true);
     } else {
@@ -77,40 +79,43 @@ function PerksPageContent() {
 
       if (loadMore && nextUrl) {
         // Use API-provided next URL
-        url = `/api/perks?next=${encodeURIComponent(nextUrl)}`;
+        url = `/api/vendors?next=${encodeURIComponent(nextUrl)}`;
       } else {
         // Initial fetch with page and page_size
         const params = new URLSearchParams();
         params.set('page', '1');
         params.set('page_size', String(PAGE_SIZE));
 
-        if (activeFilters.offerCategories.length > 0) {
-          params.set('offer_categories', activeFilters.offerCategories.join(','));
+        if (activeFilters.search) {
+          params.set('search', activeFilters.search);
         }
-        if (activeFilters.investmentLevels.length > 0) {
-          params.set('investment_levels', activeFilters.investmentLevels.join(','));
+        if (activeFilters.serviceName) {
+          params.set('service_name', activeFilters.serviceName);
+        }
+        if (activeFilters.groupName) {
+          params.set('group_name', activeFilters.groupName);
         }
 
-        url = `/api/perks?${params.toString()}`;
+        url = `/api/vendors?${params.toString()}`;
       }
 
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch offers');
+      if (!res.ok) throw new Error('Failed to fetch vendors');
 
       const data = await res.json();
 
       if (loadMore) {
-        setOffers((prev) => [...prev, ...(data.data || [])]);
+        setVendors((prev) => [...prev, ...(data.data || [])]);
       } else {
-        setOffers(data.data || []);
+        setVendors(data.data || []);
         setTotalCount(data.pagination?.count || 0);
       }
 
       setNextUrl(data.pagination?.next || null);
     } catch (err) {
-      console.error('Offers fetch error:', err);
-      setError('Unable to load perks. Please try again.');
-      if (!loadMore) setOffers([]);
+      console.error('Vendors fetch error:', err);
+      setError('Unable to load vendors. Please try again.');
+      if (!loadMore) setVendors([]);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -122,48 +127,52 @@ function PerksPageContent() {
     fetchFilterOptions();
   }, [fetchFilterOptions]);
 
-  // Fetch offers when filters change
+  // Fetch vendors when filters change
   useEffect(() => {
-    setOffers([]);
+    setVendors([]);
     setNextUrl(null);
-    fetchOffers(false);
+    fetchVendors(false);
   }, [activeFilters]);
 
-  // Toggle filter value
-  const toggleFilter = (type: 'offerCategories' | 'investmentLevels', value: string) => {
-    setActiveFilters((prev) => {
-      const current = prev[type];
-      const updated = current.includes(value)
-        ? current.filter((v) => v !== value)
-        : [...current, value];
-      return { ...prev, [type]: updated };
-    });
+  // Handle search submit
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setActiveFilters((prev) => ({ ...prev, search: searchInput }));
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchInput('');
+    setActiveFilters((prev) => ({ ...prev, search: '' }));
   };
 
   // Clear all filters
   const clearFilters = () => {
+    setSearchInput('');
     setActiveFilters({
-      offerCategories: [],
-      investmentLevels: [],
+      search: '',
+      serviceName: '',
+      groupName: '',
     });
   };
 
   const hasActiveFilters =
-    activeFilters.offerCategories.length > 0 ||
-    activeFilters.investmentLevels.length > 0;
+    activeFilters.search !== '' ||
+    activeFilters.serviceName !== '' ||
+    activeFilters.groupName !== '';
 
   const hasFilterOptions =
-    filterOptions.offerCategories.length > 0 ||
-    filterOptions.investmentLevels.length > 0;
+    filterOptions.services.length > 0 ||
+    filterOptions.vendorGroups.length > 0;
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">All Perks</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Vendors Directory</h1>
           <p className="text-slate-600">
-            Explore exclusive offers and discounts for your startup
+            Explore trusted vendors and service providers
           </p>
         </div>
 
@@ -177,18 +186,44 @@ function PerksPageContent() {
             Filters
             {hasActiveFilters && (
               <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
-                {activeFilters.offerCategories.length + activeFilters.investmentLevels.length}
+                {(activeFilters.serviceName ? 1 : 0) + (activeFilters.groupName ? 1 : 0) + (activeFilters.search ? 1 : 0)}
               </span>
             )}
           </Button>
         )}
       </div>
 
+      {/* Search Bar */}
+      <form onSubmit={handleSearch} className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search vendors..."
+            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button type="submit" variant="primary">
+          Search
+        </Button>
+      </form>
+
       {/* Filters Panel */}
       {showFilters && hasFilterOptions && (
         <Card className="p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-slate-900">Filter Offers</h3>
+            <h3 className="font-medium text-slate-900">Filter Vendors</h3>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 <X className="mr-1 h-4 w-4" />
@@ -198,44 +233,59 @@ function PerksPageContent() {
           </div>
 
           <div className="space-y-4">
-            {/* Investment Levels Filter */}
-            {filterOptions.investmentLevels.length > 0 && (
+            {/* Services Filter */}
+            {filterOptions.services.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-slate-700 mb-2">Investment Level</p>
+                <p className="text-sm font-medium text-slate-700 mb-2">Service</p>
                 <div className="flex flex-wrap gap-2">
-                  {filterOptions.investmentLevels.map((level) => (
+                  {filterOptions.services.slice(0, 15).map((service) => (
                     <button
-                      key={level}
-                      onClick={() => toggleFilter('investmentLevels', level)}
+                      key={service}
+                      onClick={() =>
+                        setActiveFilters((prev) => ({
+                          ...prev,
+                          serviceName: prev.serviceName === service ? '' : service,
+                        }))
+                      }
                       className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                        activeFilters.investmentLevels.includes(level)
+                        activeFilters.serviceName === service
                           ? 'bg-brand-600 text-white'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
-                      {level}
+                      {service}
                     </button>
                   ))}
+                  {filterOptions.services.length > 15 && (
+                    <span className="px-3 py-1 text-sm text-slate-500">
+                      +{filterOptions.services.length - 15} more
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Offer Categories Filter */}
-            {filterOptions.offerCategories.length > 0 && (
+            {/* Vendor Groups Filter */}
+            {filterOptions.vendorGroups.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-slate-700 mb-2">Category</p>
+                <p className="text-sm font-medium text-slate-700 mb-2">Group</p>
                 <div className="flex flex-wrap gap-2">
-                  {filterOptions.offerCategories.map((cat) => (
+                  {filterOptions.vendorGroups.map((group) => (
                     <button
-                      key={cat}
-                      onClick={() => toggleFilter('offerCategories', cat)}
+                      key={group}
+                      onClick={() =>
+                        setActiveFilters((prev) => ({
+                          ...prev,
+                          groupName: prev.groupName === group ? '' : group,
+                        }))
+                      }
                       className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                        activeFilters.offerCategories.includes(cat)
+                        activeFilters.groupName === group
                           ? 'bg-brand-600 text-white'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
-                      {cat}
+                      {group}
                     </button>
                   ))}
                 </div>
@@ -256,7 +306,7 @@ function PerksPageContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fetchOffers(false)}
+            onClick={() => fetchVendors(false)}
             className="ml-auto text-red-700 hover:bg-red-100"
           >
             Retry
@@ -269,26 +319,26 @@ function PerksPageContent() {
         {/* Results count */}
         <p className="mb-4 text-sm text-slate-500" aria-live="polite">
           {isLoading
-            ? 'Loading perks...'
-            : `${totalCount} ${totalCount === 1 ? 'perk' : 'perks'} found`}
+            ? 'Loading vendors...'
+            : `${totalCount} ${totalCount === 1 ? 'vendor' : 'vendors'} found`}
         </p>
 
-        {/* Offers Grid */}
-        <OffersGrid
-          offers={offers}
+        {/* Vendors Grid */}
+        <VendorsGrid
+          vendors={vendors}
           isLoading={isLoading}
-          emptyMessage="No perks available"
+          emptyMessage="No vendors found"
         />
 
         {/* Load More Button */}
         {nextUrl && !isLoading && (
           <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
-              Showing {offers.length} of {totalCount} perks
+              Showing {vendors.length} of {totalCount} vendors
             </p>
             <Button
               variant="outline"
-              onClick={() => fetchOffers(true)}
+              onClick={() => fetchVendors(true)}
               disabled={isLoadingMore}
             >
               {isLoadingMore ? (
@@ -304,10 +354,10 @@ function PerksPageContent() {
         )}
 
         {/* All loaded message */}
-        {!nextUrl && !isLoading && offers.length > 0 && (
+        {!nextUrl && !isLoading && vendors.length > 0 && (
           <div className="flex justify-center border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
-              Showing all {offers.length} perks
+              Showing all {vendors.length} vendors
             </p>
           </div>
         )}
@@ -319,26 +369,26 @@ function PerksPageContent() {
 /**
  * Loading fallback
  */
-function PerksPageLoading() {
+function VendorsPageLoading() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="h-8 w-32 animate-pulse rounded bg-slate-200" />
+        <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
         <div className="mt-2 h-5 w-64 animate-pulse rounded bg-slate-100" />
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="h-64 animate-pulse rounded-xl bg-slate-100" />
+          <div key={i} className="h-72 animate-pulse rounded-xl bg-slate-100" />
         ))}
       </div>
     </div>
   );
 }
 
-export default function PerksPage() {
+export default function VendorsPage() {
   return (
-    <Suspense fallback={<PerksPageLoading />}>
-      <PerksPageContent />
+    <Suspense fallback={<VendorsPageLoading />}>
+      <VendorsPageContent />
     </Suspense>
   );
 }

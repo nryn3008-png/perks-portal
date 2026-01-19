@@ -15,10 +15,9 @@ import {
   LayoutDashboard,
   Gift,
   Grid3X3,
-  Settings,
-  BarChart3,
-  Users,
-  ChevronDown,
+  Building2,
+  Shield,
+  UserCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAVIGATION } from '@/lib/constants';
@@ -32,9 +31,9 @@ const iconMap: Record<string, React.ElementType> = {
   LayoutDashboard,
   Gift,
   Grid3X3,
-  Settings,
-  BarChart3,
-  Users,
+  Building2,
+  Shield,
+  UserCheck,
 };
 
 interface SidebarProps {
@@ -131,20 +130,6 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
-        {/* Portfolio Selector */}
-        <div className="p-4 pb-3">
-          <button className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm hover:bg-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-brand-600 text-xs font-medium text-white">
-                A
-              </div>
-              <span className="font-medium text-slate-700">Acme Ventures</span>
-            </div>
-            <ChevronDown className="h-4 w-4 text-slate-400" />
-          </button>
-          {/* TODO: Implement portfolio/VC selector dropdown */}
-        </div>
-
         {/* Powered by GetProven - Attribution */}
         <div className="border-t border-slate-100 px-4 py-3">
           <a

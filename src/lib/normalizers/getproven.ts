@@ -367,7 +367,7 @@ export function normalizeCategory(category: GetProvenCategory): PerkCategory {
   return {
     id: String(category.id),
     name: sanitizeText(category.name) || 'Uncategorized',
-    slug: category.slug || generateSlug(category.name, category.id),
+    slug: category.slug || generateSlug(category.name, String(category.id)),
     perkCount: category.deal_count || 0,
   };
 }

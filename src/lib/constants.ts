@@ -9,11 +9,11 @@ export const NAVIGATION = {
   main: [
     { name: 'Dashboard', href: '/', icon: 'LayoutDashboard' },
     { name: 'All Perks', href: '/perks', icon: 'Gift' },
+    { name: 'Vendors', href: '/vendors', icon: 'Building2' },
   ],
   admin: [
-    { name: 'Manage Perks', href: '/admin/perks', icon: 'Settings' },
-    { name: 'Analytics', href: '/admin/analytics', icon: 'BarChart3' },
-    { name: 'Users', href: '/admin/users', icon: 'Users' },
+    { name: 'Whitelisted Domains', href: '/admin/whitelist', icon: 'Shield' },
+    { name: 'Individual Access', href: '/admin/individual-access', icon: 'UserCheck' },
   ],
 } as const;
 

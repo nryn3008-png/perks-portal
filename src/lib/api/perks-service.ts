@@ -116,11 +116,48 @@ export const perksService = {
 
   /**
    * Get single offer by ID
+   * NOTE: GetProven API doesn't support single-offer endpoint,
+   * so we fetch from the list and find by ID
    */
   async getOfferById(id: string): Promise<ApiResponse<GetProvenDeal>> {
     try {
-      const deal = await getProvenClient.getDeal(id);
-      return { success: true, data: deal };
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId)) {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_ID',
+            message: 'Invalid offer ID',
+            status: 400,
+          },
+        };
+      }
+
+      // Fetch offers in batches to find the one with matching ID
+      // API doesn't support single-offer endpoint
+      const response = await getProvenClient.getDeals({ pageSize: 500 });
+      let offer = response.results.find((deal) => deal.id === numericId);
+
+      // If not found in first batch and there are more, fetch next batches
+      let nextUrl = response.next;
+      while (!offer && nextUrl) {
+        const nextResponse = await fetchWithNextUrl(nextUrl);
+        offer = nextResponse.results.find((deal) => deal.id === numericId);
+        nextUrl = nextResponse.next;
+      }
+
+      if (!offer) {
+        return {
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Offer not found',
+            status: 404,
+          },
+        };
+      }
+
+      return { success: true, data: offer };
     } catch (error) {
       logApiError('getOfferById', error);
       return {
