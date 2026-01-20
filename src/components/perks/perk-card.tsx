@@ -14,13 +14,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star } from 'lucide-react';
-import { Card, Badge } from '@/components/ui';
-import { formatPerkValue } from '@/lib/utils';
+import { formatPerkValue, formatCurrency } from '@/lib/utils';
 import type { PerkListItem } from '@/types';
 
 interface PerkCardProps {
   perk: PerkListItem;
+  isLoading?: boolean;
 }
 
 /**
@@ -48,18 +47,18 @@ function VendorIcon({
 
   return (
     <div
-      className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100"
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-slate-100"
       aria-hidden="true"
     >
       {showLogo && (
         <Image
           src={logo}
           alt=""
-          width={32}
-          height={32}
-          className="h-8 w-8 object-contain"
+          width={40}
+          height={40}
+          className="h-10 w-10 object-contain"
           loading="lazy"
-          unoptimized={logo.startsWith('/')} // Local images don't need optimization
+          unoptimized={logo.startsWith('/')}
           onError={() => setImageError(true)}
         />
       )}
@@ -67,11 +66,11 @@ function VendorIcon({
         <Image
           src={faviconUrl}
           alt=""
-          width={32}
-          height={32}
-          className="h-8 w-8 object-contain"
+          width={40}
+          height={40}
+          className="h-10 w-10 object-contain"
           loading="lazy"
-          unoptimized // Google favicon service handles optimization
+          unoptimized
           onError={() => setFaviconError(true)}
         />
       )}
@@ -84,64 +83,169 @@ function VendorIcon({
   );
 }
 
-export function PerkCard({ perk }: PerkCardProps) {
+/**
+ * Skeleton loader for PerkCard
+ */
+function PerkCardSkeleton() {
+  return (
+    <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]">
+      {/* Header skeleton */}
+      <div className="border-b border-slate-100 p-4">
+        <div className="flex gap-3">
+          <div className="h-12 w-12 shrink-0 animate-pulse rounded bg-slate-200" />
+          <div className="flex flex-1 flex-col justify-center gap-1.5 pt-0.5">
+            <div className="h-3.5 w-32 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-3 w-48 animate-pulse rounded-full bg-slate-200" />
+          </div>
+        </div>
+      </div>
+
+      {/* Content skeleton */}
+      <div className="flex flex-col gap-4 p-4">
+        <div className="h-4 w-56 animate-pulse rounded-full bg-slate-200" />
+        <div className="flex flex-col gap-1">
+          <div className="h-3.5 w-full animate-pulse rounded-full bg-slate-200" />
+          <div className="h-3.5 w-full animate-pulse rounded-full bg-slate-200" />
+          <div className="h-3.5 w-28 animate-pulse rounded-full bg-slate-200" />
+        </div>
+      </div>
+
+      {/* Footer skeleton */}
+      <div className="flex h-14 items-center border-t border-slate-100 p-4">
+        <div className="h-6 w-6 animate-pulse rounded-full bg-slate-200" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Value badge component for displaying discount/value labels
+ */
+function ValueBadge({
+  text,
+  variant = 'green',
+}: {
+  text: string;
+  variant?: 'green' | 'blue';
+}) {
+  const variants = {
+    green: 'bg-green-50 border-green-100 text-green-700',
+    blue: 'bg-blue-50 border-blue-100 text-blue-700',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded px-2 py-0 text-sm font-semibold leading-6 tracking-wide ${variants[variant]} border`}
+    >
+      {text}
+    </span>
+  );
+}
+
+/**
+ * Get the value type label for display
+ */
+function getValueTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    percentage: 'Discount',
+    fixed: 'Savings',
+    credits: 'Credits',
+    custom: 'Offer',
+  };
+  return labels[type] || 'Offer';
+}
+
+export function PerkCard({ perk, isLoading = false }: PerkCardProps) {
+  if (isLoading) {
+    return <PerkCardSkeleton />;
+  }
+
   // Safely get provider name with fallback
   const providerName = perk.provider?.name?.trim() || 'Unknown Provider';
 
   // Safely get description with fallback
-  const description = perk.shortDescription?.trim() || 'No description available';
+  const description =
+    perk.shortDescription?.trim() || 'No description available';
 
   // Safely format value with fallback
   const formattedValue = perk.value
     ? formatPerkValue(perk.value)
     : 'Special offer';
 
+  // Get the value type label (e.g., "Discount", "Credits")
+  const valueTypeLabel = perk.value?.type
+    ? getValueTypeLabel(perk.value.type)
+    : 'Offer';
+
+  // Get category name for services display
+  const categoryName = perk.category?.name || '';
+
+  // Calculate secondary value badge (e.g., "$3K value")
+  const secondaryValue =
+    perk.value?.amount && perk.value?.type === 'credits'
+      ? formatCurrency(perk.value.amount, perk.value.currency)
+      : null;
+
   return (
     <Link
       href={`/perks/${perk.slug}`}
-      className="block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+      className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
     >
-      <Card hover className="h-full">
-        <div className="p-5">
-          {/* Header with logo and featured badge */}
-          <div className="mb-4 flex items-start justify-between">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)] transition-shadow hover:shadow-[0px_6px_20px_0px_rgba(0,0,0,0.15)]">
+        {/* Header with vendor info */}
+        <div className="border-b border-slate-100 p-4">
+          <div className="flex gap-3">
             <VendorIcon
               logo={perk.provider?.logo}
               faviconUrl={perk.provider?.faviconUrl}
               providerName={providerName}
             />
-
-            {perk.featured && (
-              <Badge variant="info" className="flex items-center gap-1">
-                <Star className="h-3 w-3" aria-hidden="true" />
-                Featured
-              </Badge>
-            )}
-          </div>
-
-          {/* Provider name */}
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-            {providerName}
-          </p>
-
-          {/* Title */}
-          <h3 className="mt-1 text-lg font-semibold text-slate-900 line-clamp-2">
-            {perk.title || 'Untitled Perk'}
-          </h3>
-
-          {/* Description */}
-          <p className="mt-2 text-sm text-slate-600 line-clamp-2">
-            {description}
-          </p>
-
-          {/* Value highlight */}
-          <div className="mt-4">
-            <span className="inline-block rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700">
-              {formattedValue}
-            </span>
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pt-0.5">
+              <h3 className="text-sm font-bold leading-5 text-slate-900 tracking-wide">
+                {providerName}
+              </h3>
+              {categoryName && (
+                <p className="truncate text-xs leading-[18px] tracking-wide text-slate-500">
+                  {categoryName}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </Card>
+
+        {/* Content section */}
+        <div className="flex flex-1 flex-col gap-3 p-4">
+          {/* Value type label */}
+          <span className="inline-flex w-fit items-center rounded border border-slate-400 px-2 py-1 text-[8px] font-bold uppercase leading-none tracking-widest text-slate-500">
+            {valueTypeLabel}
+          </span>
+
+          {/* Title and description */}
+          <div className="flex flex-col gap-1">
+            <h4 className="text-lg font-bold leading-[27px] text-slate-900 line-clamp-2">
+              {perk.title || 'Untitled Perk'}
+            </h4>
+            <p className="text-sm leading-5 tracking-wide text-slate-500 line-clamp-3">
+              {description}
+            </p>
+          </div>
+
+          {/* Value badges */}
+          <div className="flex flex-wrap gap-2.5">
+            <ValueBadge text={formattedValue} variant="green" />
+            {secondaryValue && (
+              <ValueBadge text={`${secondaryValue} value`} variant="blue" />
+            )}
+          </div>
+        </div>
+
+        {/* Footer with action */}
+        <div className="border-t border-slate-100 p-4">
+          <span className="text-sm font-semibold leading-6 tracking-wide text-blue-600">
+            View offer
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }

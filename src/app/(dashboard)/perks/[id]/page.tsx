@@ -31,6 +31,31 @@ import { Building2, Globe, Hash, Database } from 'lucide-react';
  * NO user action tracking, NO redemption state storage
  */
 
+/**
+ * Placeholder Gift Icon - Figma design system fallback for vendor logo
+ * Figma Source: https://www.figma.com/design/nKM13OcIYIJhSyop1XhjRC/?node-id=4982-15336
+ */
+function PlaceholderGiftIcon() {
+  return (
+    <svg
+      width="32"
+      height="32"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M12 7V22M12 7H8.46429C7.94332 7 7.4437 6.79018 7.07544 6.41421C6.70718 6.03824 6.5 5.52826 6.5 5C6.5 4.47174 6.70718 3.96176 7.07544 3.58579C7.4437 3.20982 7.94332 3 8.46429 3C11.2143 3 12 7 12 7ZM12 7H15.5357C16.0567 7 16.5563 6.79018 16.9246 6.41421C17.2928 6.03824 17.5 5.52826 17.5 5C17.5 4.47174 17.2928 3.96176 16.9246 3.58579C16.5563 3.20982 16.0567 3 15.5357 3C12.7857 3 12 7 12 7ZM5 12H19M5 12C4.46957 12 3.96086 11.7893 3.58579 11.4142C3.21071 11.0391 3 10.5304 3 10V9C3 8.46957 3.21071 7.96086 3.58579 7.58579C3.96086 7.21071 4.46957 7 5 7H19C19.5304 7 20.0391 7.21071 20.4142 7.58579C20.7893 7.96086 21 8.46957 21 9V10C21 10.5304 20.7893 11.0391 20.4142 11.4142C20.0391 11.7893 19.5304 12 19 12M5 12V20C5 20.5304 5.21071 21.0391 5.58579 21.4142C5.96086 21.7893 6.46957 22 7 22H17C17.5304 22 18.0391 21.7893 18.4142 21.4142C18.7893 21.0391 19 20.5304 19 20V12"
+        stroke="#b3b7c4"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 interface OfferDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -109,41 +134,47 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
         <div className="lg:col-span-2 space-y-8">
           {/* Header Section */}
           <header className="space-y-4">
-            {/* Image + Title row */}
-            <div className="flex items-start gap-5">
-              {/* Offer image */}
-              {offer.picture ? (
-                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 shadow-sm">
+            {/* Vendor logo + name row - Figma design pattern */}
+            <div className="flex items-center gap-3">
+              {/* Vendor logo - 48x48 with Figma placeholder fallback */}
+              {vendor?.logo ? (
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-[#ecedf0]">
                   <Image
-                    src={offer.picture}
+                    src={vendor.logo}
                     alt=""
-                    width={64}
-                    height={64}
+                    width={48}
+                    height={48}
                     className="h-full w-full object-contain"
                     unoptimized
                   />
                 </div>
               ) : (
-                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 shadow-sm">
-                  <span className="text-2xl font-semibold text-slate-400">
-                    {offer.name.charAt(0)}
-                  </span>
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-[#ecedf0]">
+                  <PlaceholderGiftIcon />
                 </div>
               )}
 
-              <div className="flex-1 min-w-0">
-                {/* Deal type - subtle */}
-                {offer.deal_type && (
-                  <p className="text-sm font-medium uppercase tracking-wide text-slate-500 mb-1">
-                    {offer.deal_type}
-                  </p>
-                )}
+              {/* Vendor name - only if available */}
+              {vendor?.name && (
+                <p className="flex-1 text-base font-bold leading-[22px] text-[#3d445a]">
+                  {vendor.name}
+                </p>
+              )}
+            </div>
 
-                {/* Name - strongest visual element */}
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                  {offer.name}
-                </h1>
-              </div>
+            {/* Title row */}
+            <div className="space-y-1">
+              {/* Deal type - subtle */}
+              {offer.deal_type && (
+                <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                  {offer.deal_type}
+                </p>
+              )}
+
+              {/* Name - strongest visual element */}
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                {offer.name}
+              </h1>
             </div>
 
             {/* Meta row - categories, investment levels */}

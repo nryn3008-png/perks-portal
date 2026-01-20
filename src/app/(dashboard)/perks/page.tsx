@@ -40,6 +40,9 @@ function PerksPageContent() {
   const [totalCount, setTotalCount] = useState(0);
   const [nextUrl, setNextUrl] = useState<string | null>(null);
 
+  // Vendor map state (vendorId → { logo, name })
+  const [vendorMap, setVendorMap] = useState<Record<number, { logo: string | null; name: string }>>({});
+
   // Filter state
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     offerCategories: [],
@@ -60,6 +63,30 @@ function PerksPageContent() {
       setFilterOptions(data);
     } catch (err) {
       console.error('Failed to fetch filter options:', err);
+    }
+  }, []);
+
+  // Fetch all vendors and build vendor map (vendorId → { logo, name })
+  const fetchVendors = useCallback(async () => {
+    try {
+      // Fetch all vendors with a large page size to get all data at once
+      const res = await fetch('/api/vendors?page_size=1000');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Build vendorId → { logo, name } map
+      const map: Record<number, { logo: string | null; name: string }> = {};
+      for (const vendor of data.data || []) {
+        if (vendor.id) {
+          map[vendor.id] = {
+            logo: vendor.logo || null,
+            name: vendor.name || '',
+          };
+        }
+      }
+      setVendorMap(map);
+    } catch (err) {
+      console.error('Failed to fetch vendors:', err);
     }
   }, []);
 
@@ -117,10 +144,11 @@ function PerksPageContent() {
     }
   }, [nextUrl, activeFilters]);
 
-  // Initial fetch
+  // Initial fetch - fetch filter options and vendors in parallel
   useEffect(() => {
     fetchFilterOptions();
-  }, [fetchFilterOptions]);
+    fetchVendors();
+  }, [fetchFilterOptions, fetchVendors]);
 
   // Fetch offers when filters change
   useEffect(() => {
@@ -276,6 +304,7 @@ function PerksPageContent() {
         {/* Offers Grid */}
         <OffersGrid
           offers={offers}
+          vendorMap={vendorMap}
           isLoading={isLoading}
           emptyMessage="No perks available"
         />

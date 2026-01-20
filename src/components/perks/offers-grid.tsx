@@ -10,12 +10,14 @@ import type { GetProvenDeal } from '@/types';
 
 interface OffersGridProps {
   offers: GetProvenDeal[];
+  vendorMap?: Record<number, { logo: string | null; name: string }>;  // vendorId → { logo, name }
   isLoading?: boolean;
   emptyMessage?: string;
 }
 
 export function OffersGrid({
   offers,
+  vendorMap = {},
   isLoading = false,
   emptyMessage = 'No perks available',
 }: OffersGridProps) {
@@ -46,9 +48,17 @@ export function OffersGrid({
   // Grid of offers
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {offers.map((offer) => (
-        <OfferCard key={offer.id} offer={offer} />
-      ))}
+      {offers.map((offer) => {
+        const vendor = vendorMap[offer.vendor_id];
+        return (
+          <OfferCard
+            key={offer.id}
+            offer={offer}
+            vendorLogo={vendor?.logo}
+            vendorName={vendor?.name}
+          />
+        );
+      })}
     </div>
   );
 }
