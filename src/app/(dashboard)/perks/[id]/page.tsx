@@ -440,8 +440,8 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                     </div>
                   )}
 
-                  {/* Estimated Value */}
-                  {offer.estimated_value !== null && (
+                  {/* Estimated Value - only show if > 0 */}
+                  {offer.estimated_value !== null && offer.estimated_value > 0 && (
                     <div>
                       <dt className="text-slate-500 font-medium">Estimated Value</dt>
                       <dd className="text-slate-900">${offer.estimated_value?.toLocaleString()}</dd>

@@ -63,9 +63,10 @@ function formatDiscount(discount: number | null, discountType: string | null): s
 
 /**
  * Format estimated value for display
+ * Returns null for missing or zero values to avoid misleading "$0 value" displays
  */
 function formatEstimatedValue(value: number | null): string | null {
-  if (value === null) return null;
+  if (value === null || value === 0) return null;
   if (value >= 1000) {
     return `$${Math.round(value / 1000)}K value`;
   }
@@ -244,7 +245,7 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
   // Figma prop derivation (based on data availability)
   const showDescription = Boolean(description);
   const discountValue = discount !== null;
-  const priceValue = estimatedValue !== null;
+  const priceValue = estimatedValue !== null && estimatedValue > 0;
   const priceDifference = oldPrice !== null && newPrice !== null;
   const valueTag = discountValue || priceValue;
 
