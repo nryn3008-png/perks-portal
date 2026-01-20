@@ -7,7 +7,6 @@
  */
 export const NAVIGATION = {
   main: [
-    { name: 'Dashboard', href: '/', icon: 'LayoutDashboard' },
     { name: 'All Perks', href: '/perks', icon: 'Gift' },
   ],
   admin: [

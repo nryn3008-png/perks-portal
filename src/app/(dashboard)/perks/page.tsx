@@ -43,6 +43,9 @@ function PerksPageContent() {
   // Vendor map state (vendorId → { logo, name })
   const [vendorMap, setVendorMap] = useState<Record<number, { logo: string | null; name: string }>>({});
 
+  // Totals state for header (from /api/perks/totals)
+  const [totals, setTotals] = useState<{ totalOffers: number; totalSavings: string } | null>(null);
+
   // Filter state
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     offerCategories: [],
@@ -63,6 +66,18 @@ function PerksPageContent() {
       setFilterOptions(data);
     } catch (err) {
       console.error('Failed to fetch filter options:', err);
+    }
+  }, []);
+
+  // Fetch totals for header display
+  const fetchTotals = useCallback(async () => {
+    try {
+      const res = await fetch('/api/perks/totals');
+      if (!res.ok) return;
+      const data = await res.json();
+      setTotals(data);
+    } catch (err) {
+      console.error('Failed to fetch totals:', err);
     }
   }, []);
 
@@ -144,11 +159,12 @@ function PerksPageContent() {
     }
   }, [nextUrl, activeFilters]);
 
-  // Initial fetch - fetch filter options and vendors in parallel
+  // Initial fetch - fetch filter options, vendors, and totals in parallel
   useEffect(() => {
     fetchFilterOptions();
     fetchVendors();
-  }, [fetchFilterOptions, fetchVendors]);
+    fetchTotals();
+  }, [fetchFilterOptions, fetchVendors, fetchTotals]);
 
   // Fetch offers when filters change
   useEffect(() => {
@@ -189,9 +205,19 @@ function PerksPageContent() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">All Perks</h1>
+          <h1 className="text-2xl font-bold text-slate-900">All Perks for Your Startup</h1>
           <p className="text-slate-600">
-            Explore exclusive offers and discounts for your startup
+            {totals ? (
+              <>
+                Access {totals.totalOffers}+ exclusive offers from trusted partners
+                {totals.totalSavings && totals.totalSavings !== 'No data' && (
+                  <>, worth over {totals.totalSavings} in total savings for your portfolio companies</>
+                )}
+                .
+              </>
+            ) : (
+              'Access exclusive offers from trusted partners for your portfolio companies.'
+            )}
           </p>
         </div>
 
