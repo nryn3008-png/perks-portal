@@ -14,7 +14,7 @@
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X } from 'lucide-react';
+import { AlertCircle, Loader2, Filter, X, Search } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { OffersGrid } from '@/components/perks';
 import type { GetProvenDeal } from '@/types';
@@ -45,6 +45,9 @@ function PerksPageContent() {
 
   // Totals state for header (from /api/perks/totals)
   const [totals, setTotals] = useState<{ totalOffers: number; totalSavings: string } | null>(null);
+
+  // Search state (filters by vendor name)
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Filter state
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -200,6 +203,29 @@ function PerksPageContent() {
     filterOptions.offerCategories.length > 0 ||
     filterOptions.investmentLevels.length > 0;
 
+  // Derived state for search
+  const isSearchActive = searchQuery.trim().length > 0;
+
+  // FINAL OFFERS: Single source of truth for all UI rendering
+  // Data flow: API offers (with filters) → client-side search → finalOffers
+  const finalOffers = isSearchActive
+    ? offers.filter((offer) => {
+        const vendorName = vendorMap[offer.vendor_id]?.name || '';
+        return vendorName.toLowerCase().includes(searchQuery.toLowerCase());
+      })
+    : offers;
+
+  // Determine appropriate empty message based on current state
+  const getEmptyMessage = (): string => {
+    if (isSearchActive) {
+      return `No perks found for vendor "${searchQuery}"`;
+    }
+    if (hasActiveFilters) {
+      return 'No perks match your filters';
+    }
+    return 'No perks available';
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -235,6 +261,30 @@ function PerksPageContent() {
               </span>
             )}
           </Button>
+        )}
+      </div>
+
+      {/* Search Input - filters by vendor name */}
+      <div className="relative">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
+        </div>
+        <input
+          type="text"
+          placeholder="Search by vendor name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">Clear search</span>
+          </button>
         )}
       </div>
 
@@ -320,23 +370,25 @@ function PerksPageContent() {
 
       {/* Results */}
       <div>
-        {/* Results count */}
+        {/* Results count - always reflects finalOffers */}
         <p className="mb-4 text-sm text-slate-500" aria-live="polite">
           {isLoading
             ? 'Loading perks...'
+            : isSearchActive
+            ? `${finalOffers.length} ${finalOffers.length === 1 ? 'perk' : 'perks'} found for "${searchQuery}"`
             : `${totalCount} ${totalCount === 1 ? 'perk' : 'perks'} found`}
         </p>
 
-        {/* Offers Grid */}
+        {/* Offers Grid - uses finalOffers as single source of truth */}
         <OffersGrid
-          offers={offers}
+          offers={finalOffers}
           vendorMap={vendorMap}
           isLoading={isLoading}
-          emptyMessage="No perks available"
+          emptyMessage={getEmptyMessage()}
         />
 
-        {/* Load More Button */}
-        {nextUrl && !isLoading && (
+        {/* Load More Button - hidden when search is active (client-side filtering) */}
+        {nextUrl && !isLoading && !isSearchActive && (
           <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
               Showing {offers.length} of {totalCount} perks
@@ -358,11 +410,11 @@ function PerksPageContent() {
           </div>
         )}
 
-        {/* All loaded message */}
-        {!nextUrl && !isLoading && offers.length > 0 && (
+        {/* All loaded message - hidden when search is active */}
+        {!nextUrl && !isLoading && finalOffers.length > 0 && !isSearchActive && (
           <div className="flex justify-center border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
-              Showing all {offers.length} perks
+              Showing all {finalOffers.length} perks
             </p>
           </div>
         )}

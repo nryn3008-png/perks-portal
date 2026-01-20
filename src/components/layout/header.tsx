@@ -1,8 +1,15 @@
 'use client';
 
 /**
- * Header component
- * Top navigation bar with search and user menu
+ * @deprecated Header component - NO LONGER USED
+ *
+ * This component has been deprecated. Its elements have been relocated:
+ * - API Status Chip → Sidebar (bottom section)
+ * - User Avatar → Sidebar (bottom section)
+ * - Search → Removed (was non-functional)
+ *
+ * This file is preserved for reference but is not rendered anywhere.
+ * The app now uses a header-less layout with all system elements in the sidebar.
  */
 
 import { useState } from 'react';

@@ -3,10 +3,14 @@
 /**
  * App Shell component
  * Main layout wrapper that provides consistent structure across pages
+ *
+ * Layout:
+ * - Sidebar (left) with navigation, user identity, API status
+ * - Main content area (right)
+ * - No global header - elements moved to sidebar
  */
 
 import { Sidebar } from './sidebar';
-import { Header } from './header';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -21,16 +25,13 @@ interface AppShellProps {
 export function AppShell({ children, isAdmin = false, user }: AppShellProps) {
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sidebar */}
-      <Sidebar isAdmin={isAdmin} />
+      {/* Sidebar - includes navigation, user identity, API status */}
+      <Sidebar isAdmin={isAdmin} user={user} />
 
       {/* Main content area - offset by sidebar width */}
       <div className="pl-64">
-        {/* Header */}
-        <Header user={user} isAdmin={isAdmin} />
-
-        {/* Page content */}
-        <main className="min-h-[calc(100vh-4rem)] p-6">
+        {/* Page content - full height since no header */}
+        <main className="min-h-screen p-6">
           {children}
         </main>
       </div>

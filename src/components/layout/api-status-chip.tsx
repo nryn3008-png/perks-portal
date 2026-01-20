@@ -157,11 +157,11 @@ export function ApiStatusChip({ isAdmin = false }: ApiStatusChipProps) {
         {config.label}
       </button>
 
-      {/* Popover */}
+      {/* Popover - opens upward since chip is at bottom of sidebar */}
       {showPopover && (
         <div
           ref={popoverRef}
-          className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-slate-200 bg-white py-2 shadow-lg"
+          className="absolute right-0 bottom-full z-50 mb-2 w-56 rounded-lg border border-slate-200 bg-white py-2 shadow-lg"
           role="tooltip"
         >
           {isAdmin ? (

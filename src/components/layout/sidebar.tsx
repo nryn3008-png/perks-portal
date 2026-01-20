@@ -4,23 +4,25 @@
  * Sidebar component
  * Main navigation sidebar for the application
  *
- * Branding:
+ * Includes:
  * - Bridge logo (primary) - links to https://brdg.app/home/
+ * - Navigation links
+ * - User avatar (identity presence)
+ * - API status chip
  * - Powered by GetProven (attribution) - links to https://getproven.com
  */
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
   Gift,
-  Grid3X3,
   Building2,
   Shield,
   UserCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAVIGATION } from '@/lib/constants';
+import { ApiStatusChip } from './api-status-chip';
 
 // External brand URLs
 const BRIDGE_URL = 'https://brdg.app/home/';
@@ -28,9 +30,7 @@ const GETPROVEN_URL = 'https://getproven.com';
 
 // Map icon names to components
 const iconMap: Record<string, React.ElementType> = {
-  LayoutDashboard,
   Gift,
-  Grid3X3,
   Building2,
   Shield,
   UserCheck,
@@ -38,9 +38,14 @@ const iconMap: Record<string, React.ElementType> = {
 
 interface SidebarProps {
   isAdmin?: boolean;
+  user?: {
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
 }
 
-export function Sidebar({ isAdmin = false }: SidebarProps) {
+export function Sidebar({ isAdmin = false, user }: SidebarProps) {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -130,6 +135,40 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
+        {/* User Identity */}
+        {user && (
+          <div className="flex items-center gap-3 px-4 py-3">
+            {user.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-medium text-brand-700">
+                {user.name?.charAt(0) || 'U'}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">
+                {user.name}
+              </p>
+              {user.email && (
+                <p className="text-xs text-slate-500 truncate">
+                  {user.email}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* API Status */}
+        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100">
+          <span className="text-xs text-slate-400">System</span>
+          <ApiStatusChip isAdmin={isAdmin} />
+        </div>
+
         {/* Powered by GetProven - Attribution */}
         <div className="border-t border-slate-100 px-4 py-3">
           <a
