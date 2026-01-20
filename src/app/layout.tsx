@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
+import { Mulish } from 'next/font/google';
 import '@/styles/globals.css';
+
+const mulish = Mulish({
+  subsets: ['latin'],
+  variable: '--font-mulish',
+});
 
 export const metadata: Metadata = {
   title: 'Perks Portal',
@@ -12,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={mulish.variable}>
+      <body className="font-sans">
         {children}
       </body>
     </html>

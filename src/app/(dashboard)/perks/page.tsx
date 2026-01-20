@@ -4,22 +4,25 @@
  * Perks (Offers) Listing Page
  *
  * STRICT: Uses ONLY GetProven API data
- * - Fetches from /offers/ with page and page_size
- * - Load more using API-provided 'next' URL
- * - Stop fetching when next is null
+ * - Fetches ALL offers matching filters in one request (page_size=1000)
  * - Filter by offer_categories and investment_levels (comma-separated)
  * - Filter values derived dynamically from API responses
+ * - Client-side search by vendor name (works across all ~460 perks)
  * - NO hardcoded filter options
  * - NO claimed/redeemed/expiry/popularity indicators
+ *
+ * Data Flow:
+ * API (filters applied, page_size=1000) → allFilteredOffers → vendor search → finalOffers
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X, Search } from 'lucide-react';
+import { AlertCircle, Filter, X, Search } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import { OffersGrid } from '@/components/perks';
 import type { GetProvenDeal } from '@/types';
 
-const PAGE_SIZE = 24;
+// Fetch all matching offers in one request (total perks ≈ 460)
+const PAGE_SIZE = 1000;
 
 interface FilterOptions {
   offerCategories: string[];
@@ -32,13 +35,10 @@ interface ActiveFilters {
 }
 
 function PerksPageContent() {
-  // Data state
+  // Data state - all filtered offers fetched in one request
   const [offers, setOffers] = useState<GetProvenDeal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const [nextUrl, setNextUrl] = useState<string | null>(null);
 
   // Vendor map state (vendorId → { logo, name })
   const [vendorMap, setVendorMap] = useState<Record<number, { logo: string | null; name: string }>>({});
@@ -108,59 +108,37 @@ function PerksPageContent() {
     }
   }, []);
 
-  // Fetch offers with "Load more" pattern
-  const fetchOffers = useCallback(async (loadMore = false) => {
-    if (loadMore) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-      setError(null);
-    }
+  // Fetch ALL offers matching current filters in one request
+  // This ensures vendor-name search works across the entire catalog
+  const fetchOffers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      let url: string;
+      const params = new URLSearchParams();
+      params.set('page', '1');
+      params.set('page_size', String(PAGE_SIZE));
 
-      if (loadMore && nextUrl) {
-        // Use API-provided next URL
-        url = `/api/perks?next=${encodeURIComponent(nextUrl)}`;
-      } else {
-        // Initial fetch with page and page_size
-        const params = new URLSearchParams();
-        params.set('page', '1');
-        params.set('page_size', String(PAGE_SIZE));
-
-        if (activeFilters.offerCategories.length > 0) {
-          params.set('offer_categories', activeFilters.offerCategories.join(','));
-        }
-        if (activeFilters.investmentLevels.length > 0) {
-          params.set('investment_levels', activeFilters.investmentLevels.join(','));
-        }
-
-        url = `/api/perks?${params.toString()}`;
+      if (activeFilters.offerCategories.length > 0) {
+        params.set('offer_categories', activeFilters.offerCategories.join(','));
+      }
+      if (activeFilters.investmentLevels.length > 0) {
+        params.set('investment_levels', activeFilters.investmentLevels.join(','));
       }
 
-      const res = await fetch(url);
+      const res = await fetch(`/api/perks?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch offers');
 
       const data = await res.json();
-
-      if (loadMore) {
-        setOffers((prev) => [...prev, ...(data.data || [])]);
-      } else {
-        setOffers(data.data || []);
-        setTotalCount(data.pagination?.count || 0);
-      }
-
-      setNextUrl(data.pagination?.next || null);
+      setOffers(data.data || []);
     } catch (err) {
       console.error('Offers fetch error:', err);
       setError('Unable to load perks. Please try again.');
-      if (!loadMore) setOffers([]);
+      setOffers([]);
     } finally {
       setIsLoading(false);
-      setIsLoadingMore(false);
     }
-  }, [nextUrl, activeFilters]);
+  }, [activeFilters]);
 
   // Initial fetch - fetch filter options, vendors, and totals in parallel
   useEffect(() => {
@@ -171,10 +149,8 @@ function PerksPageContent() {
 
   // Fetch offers when filters change
   useEffect(() => {
-    setOffers([]);
-    setNextUrl(null);
-    fetchOffers(false);
-  }, [activeFilters]);
+    fetchOffers();
+  }, [activeFilters, fetchOffers]);
 
   // Toggle filter value
   const toggleFilter = (type: 'offerCategories' | 'investmentLevels', value: string) => {
@@ -360,7 +336,7 @@ function PerksPageContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fetchOffers(false)}
+            onClick={() => fetchOffers()}
             className="ml-auto text-red-700 hover:bg-red-100"
           >
             Retry
@@ -376,7 +352,7 @@ function PerksPageContent() {
             ? 'Loading perks...'
             : isSearchActive
             ? `${finalOffers.length} ${finalOffers.length === 1 ? 'perk' : 'perks'} found for "${searchQuery}"`
-            : `${totalCount} ${totalCount === 1 ? 'perk' : 'perks'} found`}
+            : `${offers.length} ${offers.length === 1 ? 'perk' : 'perks'} found`}
         </p>
 
         {/* Offers Grid - uses finalOffers as single source of truth */}
@@ -387,31 +363,8 @@ function PerksPageContent() {
           emptyMessage={getEmptyMessage()}
         />
 
-        {/* Load More Button - hidden when search is active (client-side filtering) */}
-        {nextUrl && !isLoading && !isSearchActive && (
-          <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6 mt-6">
-            <p className="text-sm text-slate-500">
-              Showing {offers.length} of {totalCount} perks
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => fetchOffers(true)}
-              disabled={isLoadingMore}
-            >
-              {isLoadingMore ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Load more'
-              )}
-            </Button>
-          </div>
-        )}
-
-        {/* All loaded message - hidden when search is active */}
-        {!nextUrl && !isLoading && finalOffers.length > 0 && !isSearchActive && (
+        {/* All perks loaded message */}
+        {!isLoading && finalOffers.length > 0 && (
           <div className="flex justify-center border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
               Showing all {finalOffers.length} perks

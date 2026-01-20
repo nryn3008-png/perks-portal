@@ -300,7 +300,7 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
             {/* Title & Description - Figma node: Content */}
             <div className="flex flex-col gap-1">
               {/* Title */}
-              <h3 className="text-lg font-bold leading-[27px] text-[#0d1531]">
+              <h3 className="text-base font-bold leading-[22px] text-[#0d1531]">
                 {name}
               </h3>
 

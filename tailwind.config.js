@@ -23,7 +23,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-mulish)', 'Mulish', 'system-ui', 'sans-serif'],
       },
     },
   },
