@@ -61,16 +61,15 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
           href={BRIDGE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           aria-label="Bridge - Opens in new tab"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logos/bridge-icon.png"
-            alt=""
-            className="h-9 w-9 rounded-lg"
+            src="/logos/bridge-logo.svg"
+            alt="Bridge"
+            className="h-[18px] w-auto"
           />
-          <span className="text-xl font-bold text-slate-900">Bridge</span>
         </a>
       </div>
 
