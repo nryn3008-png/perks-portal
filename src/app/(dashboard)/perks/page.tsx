@@ -62,8 +62,8 @@ function PerksPageContent() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // View mode state - 'grouped' by vendor for better scannability
-  const [viewMode, setViewMode] = useState<ViewMode>('grouped');
+  // View mode state - 'grid' is default, 'grouped' available for vendor grouping
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // Fetch filter options from API (derived dynamically)
   const fetchFilterOptions = useCallback(async () => {
