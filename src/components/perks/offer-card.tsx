@@ -316,8 +316,8 @@ export function OfferCard({ offer, vendorLogo, vendorName, vendorPrimaryService,
         <div className="flex flex-1 flex-col gap-4 bg-white p-4">
 
           {/* Deal type label - Figma node: Solid label */}
-          <div className="inline-flex w-fit items-center rounded border border-[#b3b7c4] px-2 py-1">
-            <span className="text-[8px] font-bold uppercase leading-[8px] tracking-[1px] text-[#81879c]">
+          <div className="inline-flex w-fit items-center rounded border border-slate-300 px-2 py-1">
+            <span className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
               {dealTypeLabel}
             </span>
           </div>

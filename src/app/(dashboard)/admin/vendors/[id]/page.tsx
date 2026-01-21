@@ -44,9 +44,9 @@ import type { GetProvenDeal, GetProvenVendor, VendorClient, VendorUser } from '@
  * CLIENTS SECTION: name, logo, verified badge (only if verified=true)
  * Hidden entirely if no clients exist
  *
- * CONTACT SECTION: avatar, full name, position, email CTA
+ * CONTACT SECTION: avatar, full name, position, email CTA, phone
  * Only relevant roles (owner, contact_person)
- * NO phone numbers exposed
+ * Shows all contacts with complete contact information
  */
 
 interface AdminVendorDetailPageProps {
@@ -883,7 +883,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                       Key Contacts
                     </p>
                     <div className="space-y-4">
-                      {contacts.slice(0, 3).map((contact) => (
+                      {contacts.map((contact) => (
                         <div key={contact.id} className="flex items-start gap-4">
                           {/* Avatar */}
                           {contact.avatar ? (
@@ -913,14 +913,25 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                                 {contact.position}
                               </p>
                             )}
-                            {/* Email CTA */}
-                            <a
-                              href={`mailto:${contact.email}`}
-                              className="inline-flex items-center gap-1 mt-1 text-xs text-brand-600 hover:text-brand-700 hover:underline"
-                            >
-                              <Mail className="h-3 w-3" />
-                              Email
-                            </a>
+                            {/* Contact CTAs */}
+                            <div className="flex items-center gap-3 mt-1">
+                              <a
+                                href={`mailto:${contact.email}`}
+                                className="inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 hover:underline"
+                              >
+                                <Mail className="h-3 w-3" />
+                                Email
+                              </a>
+                              {contact.phone && (
+                                <a
+                                  href={`tel:${contact.phone}`}
+                                  className="inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 hover:underline"
+                                >
+                                  <Phone className="h-3 w-3" />
+                                  {contact.phone}
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}

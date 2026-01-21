@@ -134,10 +134,10 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
       </nav>
 
       {/* Bottom Section */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-slate-50/50">
         {/* User Identity */}
         {user && (
-          <div className="flex items-center gap-4 px-4 py-3">
+          <div className="flex items-center gap-3 px-4 py-3">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -164,13 +164,13 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
         )}
 
         {/* API Status */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-100">
-          <span className="text-xs text-slate-400">System</span>
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-xs text-slate-400">Status</span>
           <ApiStatusChip isAdmin={isAdmin} />
         </div>
 
         {/* Powered by GetProven - Attribution */}
-        <div className="border-t border-slate-100 px-4 py-3">
+        <div className="px-4 py-3">
           <a
             href={GETPROVEN_URL}
             target="_blank"

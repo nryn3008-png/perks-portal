@@ -406,16 +406,16 @@ function AdminVendorsPageContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* View Mode Toggle - Figma segmented pill toggle (node 4805-2967) */}
-          <div className="flex items-center">
+          <div className="inline-flex rounded-full border border-slate-200 bg-white p-0.5">
             <button
               type="button"
               onClick={() => setViewMode('card')}
-              className={`flex items-center justify-center px-2 py-2 rounded-l-full transition-colors ${
+              className={`flex items-center justify-center px-2.5 py-1.5 rounded-full transition-colors ${
                 viewMode === 'card'
                   ? 'bg-[#0038ff] text-white'
-                  : 'border-l border-t border-b border-[#b3b7c4] text-[#0d1531] hover:bg-[#f9f9fa]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
               aria-label="Card view"
               aria-pressed={viewMode === 'card'}
@@ -425,10 +425,10 @@ function AdminVendorsPageContent() {
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`flex items-center justify-center px-2 py-2 rounded-r-full transition-colors ${
+              className={`flex items-center justify-center px-2.5 py-1.5 rounded-full transition-colors ${
                 viewMode === 'table'
                   ? 'bg-[#0038ff] text-white'
-                  : 'border-r border-t border-b border-[#b3b7c4] text-[#0d1531] hover:bg-[#f9f9fa]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
               aria-label="Table view"
               aria-pressed={viewMode === 'table'}

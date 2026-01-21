@@ -292,7 +292,7 @@ function WhitelistPageContent() {
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">
                       {domain.offer_categories.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {domain.offer_categories.map((cat, index) => (
                             <Badge key={index} variant="default">
                               {cat.name}
