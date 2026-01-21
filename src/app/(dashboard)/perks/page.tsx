@@ -16,10 +16,12 @@
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Filter, X } from 'lucide-react';
+import { AlertCircle, Filter, X, LayoutGrid, List } from 'lucide-react';
 import { Button, Card, SearchInput } from '@/components/ui';
 import { OffersGrid } from '@/components/perks';
 import type { GetProvenDeal } from '@/types';
+
+type ViewMode = 'grid' | 'grouped';
 
 // Fetch all matching offers in one request (total perks ≈ 460)
 const PAGE_SIZE = 1000;
@@ -59,6 +61,9 @@ function PerksPageContent() {
     investmentLevels: [],
   });
   const [showFilters, setShowFilters] = useState(false);
+
+  // View mode state - 'grouped' by vendor for better scannability
+  const [viewMode, setViewMode] = useState<ViewMode>('grouped');
 
   // Fetch filter options from API (derived dynamically)
   const fetchFilterOptions = useCallback(async () => {
@@ -224,21 +229,56 @@ function PerksPageContent() {
           </p>
         </div>
 
-        {/* Filter toggle button */}
-        {hasFilterOptions && (
-          <Button
-            variant={showFilters ? 'primary' : 'outline'}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-            {hasActiveFilters && (
-              <span className="ml-2 rounded-full bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
-                {activeFilters.offerCategories.length + activeFilters.investmentLevels.length}
-              </span>
-            )}
-          </Button>
-        )}
+        {/* View toggle and Filter buttons */}
+        <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex rounded-full border border-slate-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              aria-pressed={viewMode === 'grid'}
+              title="Grid view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grouped')}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                viewMode === 'grouped'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              aria-pressed={viewMode === 'grouped'}
+              title="Group by vendor"
+            >
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">By Vendor</span>
+            </button>
+          </div>
+
+          {/* Filter toggle button */}
+          {hasFilterOptions && (
+            <Button
+              variant={showFilters ? 'primary' : 'outline'}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+              {hasActiveFilters && (
+                <span className="ml-2 rounded-full bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
+                  {activeFilters.offerCategories.length + activeFilters.investmentLevels.length}
+                </span>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search Input - filters by vendor name */}
@@ -338,6 +378,8 @@ function PerksPageContent() {
             ? 'Loading perks...'
             : isSearchActive
             ? `${finalOffers.length} ${finalOffers.length === 1 ? 'perk' : 'perks'} found for "${searchQuery}"`
+            : viewMode === 'grouped'
+            ? `${offers.length} ${offers.length === 1 ? 'perk' : 'perks'} from ${new Set(offers.map(o => o.vendor_id)).size} vendors`
             : `${offers.length} ${offers.length === 1 ? 'perk' : 'perks'} found`}
         </p>
 
@@ -347,6 +389,7 @@ function PerksPageContent() {
           vendorMap={vendorMap}
           isLoading={isLoading}
           emptyMessage={getEmptyMessage()}
+          groupByVendor={viewMode === 'grouped'}
         />
 
         {/* All perks loaded message */}

@@ -2,17 +2,38 @@
 
 /**
  * Offers Grid Component
- * Displays a grid of offer cards with loading and empty states
+ * Displays a grid of offer cards with loading and empty states.
+ * Supports two view modes:
+ * - Flat grid (default): Shows all offers in a simple grid
+ * - Grouped by vendor: Shows offers organized by vendor with collapsible sections
  */
 
+import { useMemo } from 'react';
 import { OfferCard } from './offer-card';
+import { VendorGroup } from './vendor-group';
 import type { GetProvenDeal } from '@/types';
+
+interface VendorInfo {
+  logo: string | null;
+  name: string;
+  primaryService?: string | null;
+}
 
 interface OffersGridProps {
   offers: GetProvenDeal[];
-  vendorMap?: Record<number, { logo: string | null; name: string; primaryService?: string | null }>;
+  vendorMap?: Record<number, VendorInfo>;
   isLoading?: boolean;
   emptyMessage?: string;
+  /** When true, groups offers by vendor with collapsible sections */
+  groupByVendor?: boolean;
+}
+
+interface VendorGroupData {
+  vendorId: number;
+  vendorName: string;
+  vendorLogo: string | null;
+  vendorPrimaryService?: string | null;
+  offers: GetProvenDeal[];
 }
 
 export function OffersGrid({
@@ -20,7 +41,41 @@ export function OffersGrid({
   vendorMap = {},
   isLoading = false,
   emptyMessage = 'No perks available',
+  groupByVendor = false,
 }: OffersGridProps) {
+  // Group offers by vendor_id - memoized to avoid recalculation
+  const vendorGroups = useMemo((): VendorGroupData[] => {
+    if (!groupByVendor) return [];
+
+    // Group offers by vendor_id
+    const groupMap = new Map<number, GetProvenDeal[]>();
+    for (const offer of offers) {
+      const vendorId = offer.vendor_id;
+      if (!groupMap.has(vendorId)) {
+        groupMap.set(vendorId, []);
+      }
+      groupMap.get(vendorId)!.push(offer);
+    }
+
+    // Convert to array with vendor info, sorted by vendor name
+    const groups: VendorGroupData[] = [];
+    for (const [vendorId, vendorOffers] of groupMap) {
+      const vendorInfo = vendorMap[vendorId];
+      groups.push({
+        vendorId,
+        vendorName: vendorInfo?.name || `Vendor ${vendorId}`,
+        vendorLogo: vendorInfo?.logo || null,
+        vendorPrimaryService: vendorInfo?.primaryService,
+        offers: vendorOffers,
+      });
+    }
+
+    // Sort by vendor name alphabetically
+    groups.sort((a, b) => a.vendorName.localeCompare(b.vendorName));
+
+    return groups;
+  }, [offers, vendorMap, groupByVendor]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -45,7 +100,25 @@ export function OffersGrid({
     );
   }
 
-  // Grid of offers
+  // Grouped view - vendor sections with collapsible headers
+  if (groupByVendor) {
+    return (
+      <div className="space-y-4">
+        {vendorGroups.map((group) => (
+          <VendorGroup
+            key={group.vendorId}
+            vendorId={group.vendorId}
+            vendorName={group.vendorName}
+            vendorLogo={group.vendorLogo}
+            vendorPrimaryService={group.vendorPrimaryService}
+            offers={group.offers}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Flat grid view (default)
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {offers.map((offer) => {

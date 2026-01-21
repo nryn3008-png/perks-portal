@@ -157,13 +157,13 @@ function WhitelistPageContent() {
           </p>
         </div>
 
-        {/* CSV Upload */}
+        {/* CSV Upload - styled to match Button component */}
         <div>
           <label
-            className={`inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-colors min-h-[44px] px-4 text-sm ${
+            className={`inline-flex items-center justify-center gap-2 rounded-full font-mulish font-semibold tracking-[0.4px] leading-6 px-4 py-2 text-sm transition-all duration-150 ${
               isUploading
-                ? 'bg-brand-400 text-white cursor-not-allowed'
-                : 'bg-brand-600 text-white hover:bg-brand-700 cursor-pointer'
+                ? 'bg-[#0038ff]/30 text-white cursor-not-allowed'
+                : 'bg-[#0038ff] text-white hover:bg-[#0030e0] cursor-pointer'
             }`}
           >
             <input

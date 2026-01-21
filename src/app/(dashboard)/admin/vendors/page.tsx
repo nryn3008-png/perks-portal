@@ -28,7 +28,6 @@ interface FilterOptions {
 }
 
 interface ActiveFilters {
-  search: string;
   serviceName: string;
   groupName: string;
 }
@@ -246,7 +245,6 @@ function AdminVendorsPageContent() {
     vendorGroups: [],
   });
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
-    search: '',
     serviceName: '',
     groupName: '',
   });
@@ -308,9 +306,6 @@ function AdminVendorsPageContent() {
         params.set('page', '1');
         params.set('page_size', String(PAGE_SIZE));
 
-        if (activeFilters.search) {
-          params.set('search', activeFilters.search);
-        }
         if (activeFilters.serviceName) {
           params.set('service_name', activeFilters.serviceName);
         }
@@ -357,32 +352,33 @@ function AdminVendorsPageContent() {
     fetchVendors(false);
   }, [activeFilters]);
 
-  // Handle search submit
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setActiveFilters((prev) => ({ ...prev, search: searchInput }));
-  };
-
-  // Clear search
+  // Clear search (client-side only)
   const clearSearch = () => {
     setSearchInput('');
-    setActiveFilters((prev) => ({ ...prev, search: '' }));
   };
 
   // Clear all filters
   const clearFilters = () => {
     setSearchInput('');
     setActiveFilters({
-      search: '',
       serviceName: '',
       groupName: '',
     });
   };
 
+  // Check if search is active (client-side filtering)
+  const isSearchActive = searchInput.trim().length > 0;
+
   const hasActiveFilters =
-    activeFilters.search !== '' ||
     activeFilters.serviceName !== '' ||
     activeFilters.groupName !== '';
+
+  // Client-side search filtering (filters as user types)
+  const finalVendors = isSearchActive
+    ? vendors.filter((vendor) =>
+        vendor.name.toLowerCase().includes(searchInput.toLowerCase())
+      )
+    : vendors;
 
   const hasFilterOptions =
     filterOptions.services.length > 0 ||
@@ -451,7 +447,7 @@ function AdminVendorsPageContent() {
               Filters
               {hasActiveFilters && (
                 <span className="ml-2 rounded-full bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
-                  {(activeFilters.serviceName ? 1 : 0) + (activeFilters.groupName ? 1 : 0) + (activeFilters.search ? 1 : 0)}
+                  {(activeFilters.serviceName ? 1 : 0) + (activeFilters.groupName ? 1 : 0)}
                 </span>
               )}
             </Button>
@@ -459,21 +455,14 @@ function AdminVendorsPageContent() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="flex-1">
-          <SearchInput
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onClear={clearSearch}
-            placeholder="Search vendors..."
-            aria-label="Search vendors"
-          />
-        </div>
-        <Button type="submit" variant="primary">
-          Search
-        </Button>
-      </form>
+      {/* Search Bar - filters as you type */}
+      <SearchInput
+        value={searchInput}
+        onChange={(e) => setSearchInput(e.target.value)}
+        onClear={clearSearch}
+        placeholder="Search vendors..."
+        aria-label="Search vendors"
+      />
 
       {/* Filters Panel */}
       {showFilters && hasFilterOptions && (
@@ -576,23 +565,25 @@ function AdminVendorsPageContent() {
         <p className="mb-4 text-sm text-slate-500" aria-live="polite">
           {isLoading
             ? 'Loading vendors...'
+            : isSearchActive
+            ? `${finalVendors.length} ${finalVendors.length === 1 ? 'vendor' : 'vendors'} matching "${searchInput}"`
             : `${totalCount} ${totalCount === 1 ? 'vendor' : 'vendors'} found`}
         </p>
 
         {/* Vendors Grid or Table */}
         {viewMode === 'card' ? (
           <VendorsGrid
-            vendors={vendors}
+            vendors={finalVendors}
             isLoading={isLoading}
-            emptyMessage="No vendors found"
+            emptyMessage={isSearchActive ? `No vendors found for "${searchInput}"` : "No vendors found"}
             basePath="/admin/vendors"
             perksCountMap={perksCountMap}
           />
         ) : (
           <VendorsTable
-            vendors={vendors}
+            vendors={finalVendors}
             isLoading={isLoading}
-            emptyMessage="No vendors found"
+            emptyMessage={isSearchActive ? `No vendors found for "${searchInput}"` : "No vendors found"}
             basePath="/admin/vendors"
             perksCountMap={perksCountMap}
           />
