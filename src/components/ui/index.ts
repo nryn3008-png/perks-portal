@@ -15,3 +15,4 @@ export {
   type CardProps,
 } from './card';
 export { Input, type InputProps } from './input';
+export { Disclosure } from './disclosure';

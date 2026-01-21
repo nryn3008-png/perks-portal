@@ -177,39 +177,57 @@ function ColorLabel({
 
 /**
  * Skeleton Loader (matches Figma loading state)
+ * Figma Source: https://www.figma.com/design/?node-id=4784-501
  */
 function OfferCardSkeleton() {
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]">
-      {/* Header - uses Figma placeholder */}
+      {/* Header - logo + vendor name placeholder */}
       <div className="border-b border-[#f2f3f5] p-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-[#ecedf0]">
-          <PlaceholderGiftIcon />
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[#ecedf0]">
+            <PlaceholderGiftIcon />
+          </div>
+          {/* Vendor name skeleton bar */}
+          <div className="h-5 w-32 rounded bg-[#e6e8ed]" />
         </div>
       </div>
 
-      {/* Content - fixed height matching Figma */}
-      <div className="flex h-[248px] flex-col gap-3 bg-white p-4">
-        {/* Label + Title skeleton */}
-        <div className="flex flex-col gap-1">
-          <div className="h-4 w-[62px] rounded-full bg-[#e6e8ed]" />
-          <div className="h-3.5 w-full rounded-full bg-[#e6e8ed]" />
-          <div className="h-3.5 w-full rounded-full bg-[#e6e8ed]" />
+      {/* Content - skeleton bars matching Figma layout */}
+      <div className="flex flex-col gap-4 bg-white p-4">
+        {/* Label skeleton */}
+        <div className="h-[18px] w-[50px] rounded bg-[#e6e8ed]" />
+
+        {/* Title skeleton - two lines */}
+        <div className="flex flex-col gap-2">
+          <div className="h-5 w-full rounded bg-[#e6e8ed]" />
+          <div className="h-5 w-[85%] rounded bg-[#e6e8ed]" />
         </div>
-        {/* Description skeleton */}
-        <div className="flex flex-col gap-1">
-          <div className="h-3.5 w-[272px] rounded-full bg-[#e6e8ed]" />
-          <div className="h-3.5 w-[249px] rounded-full bg-[#e6e8ed]" />
-          <div className="h-3.5 w-[113px] rounded-full bg-[#e6e8ed]" />
+
+        {/* Description skeleton - three lines */}
+        <div className="flex flex-col gap-1.5">
+          <div className="h-4 w-full rounded bg-[#e6e8ed]" />
+          <div className="h-4 w-[90%] rounded bg-[#e6e8ed]" />
+          <div className="h-4 w-[40%] rounded bg-[#e6e8ed]" />
         </div>
-        {/* Tags skeleton */}
-        <div className="h-4 w-[154px] rounded-full bg-[#e6e8ed]" />
-        <div className="h-4 w-[154px] rounded-full bg-[#e6e8ed]" />
+
+        {/* Value tags skeleton */}
+        <div className="flex gap-2">
+          <div className="h-7 w-20 rounded bg-[#e6e8ed]" />
+          <div className="h-7 w-24 rounded bg-[#e6e8ed]" />
+        </div>
+
+        {/* Investment levels skeleton */}
+        <div className="flex flex-wrap gap-2">
+          <div className="h-7 w-24 rounded bg-[#e6e8ed]" />
+          <div className="h-7 w-20 rounded bg-[#e6e8ed]" />
+          <div className="h-7 w-16 rounded bg-[#e6e8ed]" />
+        </div>
       </div>
 
       {/* Footer with spinner */}
       <div className="flex h-14 items-center border-t border-[#f2f3f5] bg-white p-4">
-        <Loader2 className="h-6 w-6 animate-spin text-[#81879c]" />
+        <Loader2 className="h-5 w-5 animate-spin text-[#81879c]" />
       </div>
     </div>
   );

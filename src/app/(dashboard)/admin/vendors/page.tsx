@@ -37,6 +37,7 @@ function AdminVendorsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [nextUrl, setNextUrl] = useState<string | null>(null);
+  const [perksCountMap, setPerksCountMap] = useState<Record<number, number>>({});
 
   // Filter state
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -60,6 +61,27 @@ function AdminVendorsPageContent() {
       setFilterOptions(data);
     } catch (err) {
       console.error('Failed to fetch filter options:', err);
+    }
+  }, []);
+
+  // Fetch perks to count per vendor
+  const fetchPerksCount = useCallback(async () => {
+    try {
+      const res = await fetch('/api/perks?page_size=1000');
+      if (!res.ok) return;
+      const data = await res.json();
+      const perks = data.data || [];
+
+      // Build count map: vendor_id -> number of perks
+      const countMap: Record<number, number> = {};
+      for (const perk of perks) {
+        if (perk.vendor_id) {
+          countMap[perk.vendor_id] = (countMap[perk.vendor_id] || 0) + 1;
+        }
+      }
+      setPerksCountMap(countMap);
+    } catch (err) {
+      console.error('Failed to fetch perks count:', err);
     }
   }, []);
 
@@ -123,7 +145,8 @@ function AdminVendorsPageContent() {
   // Initial fetch
   useEffect(() => {
     fetchFilterOptions();
-  }, [fetchFilterOptions]);
+    fetchPerksCount();
+  }, [fetchFilterOptions, fetchPerksCount]);
 
   // Fetch vendors when filters change
   useEffect(() => {
@@ -338,6 +361,7 @@ function AdminVendorsPageContent() {
           isLoading={isLoading}
           emptyMessage="No vendors found"
           basePath="/admin/vendors"
+          perksCountMap={perksCountMap}
         />
 
         {/* Load More Button */}

@@ -12,12 +12,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, Badge } from '@/components/ui';
-import { Building2, Users, Calendar } from 'lucide-react';
+import { Building2, Users, Calendar, Gift } from 'lucide-react';
 import type { GetProvenVendor } from '@/types';
 
 interface VendorCardProps {
   vendor: GetProvenVendor;
   basePath?: string;
+  perksCount?: number;
 }
 
 /**
@@ -54,7 +55,7 @@ function formatEmployeeRange(min: number | null, max: number | null): string | n
   return null;
 }
 
-export function VendorCard({ vendor, basePath = '/admin/vendors' }: VendorCardProps) {
+export function VendorCard({ vendor, basePath = '/admin/vendors', perksCount }: VendorCardProps) {
   const description = truncate(stripHtml(vendor.description || ''), 120);
   const employeeRange = formatEmployeeRange(vendor.employee_min, vendor.employee_max);
 
@@ -104,6 +105,14 @@ export function VendorCard({ vendor, basePath = '/admin/vendors' }: VendorCardPr
 
           {/* Meta info */}
           <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            {/* Perks count */}
+            {perksCount !== undefined && (
+              <span className="flex items-center gap-1">
+                <Gift className="h-3.5 w-3.5" />
+                {perksCount} {perksCount === 1 ? 'perk' : 'perks'}
+              </span>
+            )}
+
             {/* Employees */}
             {employeeRange && (
               <span className="flex items-center gap-1">

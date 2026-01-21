@@ -13,6 +13,7 @@ interface VendorsGridProps {
   isLoading?: boolean;
   emptyMessage?: string;
   basePath?: string;
+  perksCountMap?: Record<number, number>;
 }
 
 export function VendorsGrid({
@@ -20,6 +21,7 @@ export function VendorsGrid({
   isLoading = false,
   emptyMessage = 'No vendors found',
   basePath = '/admin/vendors',
+  perksCountMap,
 }: VendorsGridProps) {
   // Loading state
   if (isLoading) {
@@ -49,7 +51,12 @@ export function VendorsGrid({
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {vendors.map((vendor) => (
-        <VendorCard key={vendor.id} vendor={vendor} basePath={basePath} />
+        <VendorCard
+          key={vendor.id}
+          vendor={vendor}
+          basePath={basePath}
+          perksCount={perksCountMap?.[vendor.id]}
+        />
       ))}
     </div>
   );
