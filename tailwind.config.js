@@ -24,6 +24,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ['var(--font-mulish)', 'Mulish', 'system-ui', 'sans-serif'],
+        mulish: ['var(--font-mulish)', 'Mulish', 'system-ui', 'sans-serif'],
       },
     },
   },

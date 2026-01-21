@@ -26,7 +26,8 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border',
+        // px-2 (8px), py-1 (4px) per DESIGN_SYSTEM.md - 4px exception for badge padding
+        'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium border',
         variants[variant],
         className
       )}

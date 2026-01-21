@@ -91,9 +91,9 @@ function PerkCardSkeleton() {
     <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]">
       {/* Header skeleton */}
       <div className="border-b border-slate-100 p-4">
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <div className="h-12 w-12 shrink-0 animate-pulse rounded bg-slate-200" />
-          <div className="flex flex-1 flex-col justify-center gap-1.5 pt-0.5">
+          <div className="flex flex-1 flex-col justify-center gap-2">
             <div className="h-3.5 w-32 animate-pulse rounded-full bg-slate-200" />
             <div className="h-3 w-48 animate-pulse rounded-full bg-slate-200" />
           </div>
@@ -194,13 +194,13 @@ export function PerkCard({ perk, isLoading = false }: PerkCardProps) {
       <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)] transition-shadow hover:shadow-[0px_6px_20px_0px_rgba(0,0,0,0.15)]">
         {/* Header with vendor info */}
         <div className="border-b border-slate-100 p-4">
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <VendorIcon
               logo={perk.provider?.logo}
               faviconUrl={perk.provider?.faviconUrl}
               providerName={providerName}
             />
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 pt-0.5">
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
               <h3 className="text-sm font-bold leading-5 text-slate-900 tracking-wide">
                 {providerName}
               </h3>
@@ -214,7 +214,7 @@ export function PerkCard({ perk, isLoading = false }: PerkCardProps) {
         </div>
 
         {/* Content section */}
-        <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {/* Value type label */}
           <span className="inline-flex w-fit items-center rounded border border-slate-400 px-2 py-1 text-[8px] font-bold uppercase leading-none tracking-widest text-slate-500">
             {valueTypeLabel}
@@ -231,7 +231,8 @@ export function PerkCard({ perk, isLoading = false }: PerkCardProps) {
           </div>
 
           {/* Value badges */}
-          <div className="flex flex-wrap gap-2.5">
+          {/* gap-2 (8px) per DESIGN_SYSTEM.md */}
+          <div className="flex flex-wrap gap-2">
             <ValueBadge text={formattedValue} variant="green" />
             {secondaryValue && (
               <ValueBadge text={`${secondaryValue} value`} variant="blue" />

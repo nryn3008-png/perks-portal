@@ -16,8 +16,8 @@
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Filter, X, Search } from 'lucide-react';
-import { Button, Card } from '@/components/ui';
+import { AlertCircle, Filter, X } from 'lucide-react';
+import { Button, Card, SearchInput } from '@/components/ui';
 import { OffersGrid } from '@/components/perks';
 import type { GetProvenDeal } from '@/types';
 
@@ -232,7 +232,7 @@ function PerksPageContent() {
             <Filter className="mr-2 h-4 w-4" />
             Filters
             {hasActiveFilters && (
-              <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+              <span className="ml-2 rounded-full bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
                 {activeFilters.offerCategories.length + activeFilters.investmentLevels.length}
               </span>
             )}
@@ -241,28 +241,13 @@ function PerksPageContent() {
       </div>
 
       {/* Search Input - filters by vendor name */}
-      <div className="relative">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
-        </div>
-        <input
-          type="text"
-          placeholder="Search by vendor name..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery('')}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Clear search</span>
-          </button>
-        )}
-      </div>
+      <SearchInput
+        placeholder="Search by vendor name..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onClear={() => setSearchQuery('')}
+        aria-label="Search perks by vendor name"
+      />
 
       {/* Filters Panel */}
       {showFilters && hasFilterOptions && (
@@ -328,7 +313,7 @@ function PerksPageContent() {
       {/* Error State */}
       {error && (
         <div
-          className="flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-800"
+          className="flex items-center gap-4 rounded-lg bg-red-50 p-4 text-red-800"
           role="alert"
         >
           <AlertCircle className="h-5 w-5 flex-shrink-0" aria-hidden="true" />

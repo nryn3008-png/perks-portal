@@ -61,7 +61,7 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
           href={BRIDGE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2.5 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          className="flex items-center gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           aria-label="Bridge - Opens in new tab"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -90,7 +90,7 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-4 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive(item.href)
                   ? 'bg-brand-50 text-brand-700'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -118,7 +118,7 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'flex items-center gap-4 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     isActive(item.href)
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -137,7 +137,7 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
         {/* User Identity */}
         {user && (
-          <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex items-center gap-4 px-4 py-3">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

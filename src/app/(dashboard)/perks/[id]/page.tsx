@@ -9,7 +9,7 @@ import {
   Mail,
   Info,
 } from 'lucide-react';
-import { Badge, Card, CardContent, Disclosure } from '@/components/ui';
+import { Badge, Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
 import { CopyButton, OfferCard } from '@/components/perks';
 import { perksService, vendorsService } from '@/lib/api';
 import type { GetProvenDeal, GetProvenVendor } from '@/types';
@@ -136,7 +136,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
       {/* Back navigation */}
       <Link
         href="/perks"
-        className="mb-8 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
+        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to Perks
@@ -148,7 +148,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
           {/* Header Section */}
           <header className="space-y-4">
             {/* Vendor logo + name row - Figma design pattern */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {/* Vendor logo - 48x48 with Figma placeholder fallback */}
               {vendor?.logo ? (
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-[#ecedf0]">
@@ -191,13 +191,13 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
             </div>
 
             {/* Meta row - categories, investment levels */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-4 pt-2">
               {/* Categories */}
               {offer.offer_categories.length > 0 && (
                 offer.offer_categories.map((cat) => (
                   <span
                     key={cat.name}
-                    className="flex items-center gap-1.5 text-sm text-slate-600"
+                    className="flex items-center gap-2 text-sm text-slate-600"
                   >
                     <Tag className="h-3.5 w-3.5" aria-hidden="true" />
                     {cat.name}
@@ -251,7 +251,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
 
                 {/* Price comparison */}
                 {(offer.old_price || offer.new_price) && (
-                  <div className="flex items-center gap-3 pt-2">
+                  <div className="flex items-center gap-4 pt-2">
                     {offer.old_price && (
                       <span className="text-lg text-slate-400 line-through">
                         ${offer.old_price.toLocaleString()}
@@ -295,9 +295,9 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               </h2>
               <Card className="border-slate-200">
                 <CardContent className="p-5 sm:p-6">
-                  <div className="flex items-start gap-3 text-sm">
+                  <div className="flex items-start gap-4 text-sm">
                     <Info
-                      className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand-500"
+                      className="mt-1 h-5 w-5 flex-shrink-0 text-brand-500"
                       aria-hidden="true"
                     />
                     <span className="text-slate-700">
@@ -334,7 +334,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                       href={offer.terms_and_conditions}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-brand-600 hover:text-brand-700 hover:underline"
+                      className="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 hover:underline"
                     >
                       <ExternalLink className="h-4 w-4" aria-hidden="true" />
                       View Full Terms
@@ -393,40 +393,43 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
 
                     {/* Contact email */}
                     {offer.contact_email && (
-                      <a
+                      <LinkButton
                         href={`mailto:${offer.contact_email}`}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
+                        variant="secondary"
+                        className="w-full"
                       >
                         <Mail className="h-4 w-4" aria-hidden="true" />
                         {offer.contact_email}
-                      </a>
+                      </LinkButton>
                     )}
 
                     {/* Details URL */}
                     {offer.details_url && (
-                      <a
+                      <LinkButton
                         href={offer.details_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                        variant="outline"
+                        className="w-full"
                       >
                         <ExternalLink className="h-4 w-4" aria-hidden="true" />
                         More Details
-                      </a>
+                      </LinkButton>
                     )}
                   </>
                 )}
 
                 {/* Primary CTA - GetProven link (always present) */}
-                <a
+                <LinkButton
                   href={offer.getproven_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-colors hover:bg-brand-700 active:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  variant="primary"
+                  className="w-full"
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                   Redeem Offer
-                </a>
+                </LinkButton>
 
                 {/* Value highlight in sidebar */}
                 {(offer.estimated_value || discountDisplay) && (
@@ -511,7 +514,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                         <h4 className="text-sm font-semibold text-slate-900">
                           {vendor.name}
                         </h4>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-xs text-slate-500 mt-1">
                           Vendor ID: {vendor.id}
                         </p>
                         {vendor.website && (
@@ -519,7 +522,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                             href={vendor.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 mt-1 text-sm text-brand-600 hover:text-brand-700 hover:underline"
+                            className="inline-flex items-center gap-2 mt-1 text-sm text-brand-600 hover:text-brand-700 hover:underline"
                           >
                             <Globe className="h-3.5 w-3.5" />
                             {vendor.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
@@ -548,7 +551,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               </h3>
               <Card className="border-slate-200">
                 <CardContent className="p-4">
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <dt className="text-slate-500 font-medium">Offer ID</dt>
                       <dd className="text-slate-900 font-mono">{offer.id}</dd>

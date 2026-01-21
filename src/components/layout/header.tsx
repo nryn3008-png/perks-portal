@@ -53,15 +53,15 @@ export function Header({ user, isAdmin = false }: HeaderProps) {
       </form>
 
       {/* Right side actions */}
-      <div className="flex items-center gap-3">
-        {/* API Status Chip */}
+      <div className="flex items-center gap-4">
+        {/* API Status Chip - 16px gap per DESIGN_SYSTEM.md */}
         <ApiStatusChip isAdmin={isAdmin} />
 
         {/* User menu */}
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100"
+            className="flex items-center gap-2 rounded-lg p-2 hover:bg-slate-100"
           >
             {user?.avatarUrl ? (
               <img

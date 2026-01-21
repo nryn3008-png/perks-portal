@@ -28,7 +28,7 @@ export function Disclosure({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
+        className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
       >
         <span className="flex items-center gap-2">
           {icon || <Database className="h-4 w-4" />}

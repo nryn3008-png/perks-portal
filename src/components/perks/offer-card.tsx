@@ -184,7 +184,7 @@ function OfferCardSkeleton() {
     <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]">
       {/* Header - logo + vendor name placeholder */}
       <div className="border-b border-[#f2f3f5] p-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-[#ecedf0]">
             <PlaceholderGiftIcon />
           </div>
@@ -205,7 +205,7 @@ function OfferCardSkeleton() {
         </div>
 
         {/* Description skeleton - two lines (bounded) */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <div className="h-4 w-full rounded bg-[#e6e8ed]" />
           <div className="h-4 w-[90%] rounded bg-[#e6e8ed]" />
         </div>
@@ -291,7 +291,7 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
             Fixed height slot for vendor info
             ═══════════════════════════════════════════════════════════════════ */}
         <div className="border-b border-[#f2f3f5] bg-white p-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <VendorLogo src={picture} />
             {vendorName && (
               <p className="min-w-0 flex-1 truncate text-base font-bold leading-[22px] text-[#3d445a]">
@@ -308,7 +308,7 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
         <div className="flex flex-1 flex-col gap-4 bg-white p-4">
 
           {/* Deal type label - Figma node: Solid label */}
-          <div className="inline-flex w-fit items-center rounded border border-[#b3b7c4] px-[7px] py-1">
+          <div className="inline-flex w-fit items-center rounded border border-[#b3b7c4] px-2 py-1">
             <span className="text-[8px] font-bold uppercase leading-[8px] tracking-[1px] text-[#81879c]">
               {dealTypeLabel}
             </span>
@@ -331,7 +331,7 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
 
           {/* Value Tags Section - only if valueTag */}
           {valueTag && (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               {/* Discount & Value badges */}
               <div className="flex flex-wrap gap-2">
                 {/* Green discount badge - only if discountValue */}

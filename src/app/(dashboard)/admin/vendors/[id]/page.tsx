@@ -27,7 +27,7 @@ import {
   Hash,
   Gift,
 } from 'lucide-react';
-import { Badge, Card, CardContent, Disclosure } from '@/components/ui';
+import { Badge, Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
 import { vendorsService, perksService } from '@/lib/api';
 import { OfferCard } from '@/components/perks';
 import type { GetProvenVendor, VendorClient, VendorUser } from '@/types';
@@ -115,7 +115,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
   return (
     <div className="mx-auto max-w-5xl">
       {/* Admin Header */}
-      <div className="mb-6 flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <div className="mb-6 flex items-center gap-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
         <Shield className="h-5 w-5 text-amber-600" />
         <div>
           <h2 className="font-semibold text-amber-900">Admin Only</h2>
@@ -128,7 +128,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
       {/* Back navigation */}
       <Link
         href="/admin/vendors"
-        className="mb-8 inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
+        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to Vendors
@@ -188,14 +188,14 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
             {/* Meta row */}
             <div className="flex flex-wrap items-center gap-4 pt-1 text-sm text-slate-600">
               {/* Perks count */}
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-2">
                 <Gift className="h-4 w-4 text-slate-400" aria-hidden="true" />
                 {vendorPerks.length} {vendorPerks.length === 1 ? 'perk' : 'perks'} available
               </span>
 
               {/* Employees */}
               {employeeRange && (
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-slate-400" aria-hidden="true" />
                   {employeeRange} employees
                 </span>
@@ -203,7 +203,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
 
               {/* Founded */}
               {vendor.founded && (
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-slate-400" aria-hidden="true" />
                   Founded {vendor.founded}
                 </span>
@@ -215,7 +215,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                   href={vendor.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-brand-600 hover:text-brand-700 hover:underline"
+                  className="flex items-center gap-2 text-brand-600 hover:text-brand-700 hover:underline"
                 >
                   <Globe className="h-4 w-4" aria-hidden="true" />
                   Website
@@ -561,7 +561,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                 </h3>
                 <Card className="border-slate-200">
                   <CardContent className="p-4">
-                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                       <div>
                         <dt className="text-slate-500 font-medium">ID</dt>
                         <dd className="text-slate-900 font-mono">{vendor.id}</dd>
@@ -796,40 +796,45 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
               {/* Card body */}
               <div className="p-6 space-y-5">
                 {/* Primary CTA - GetProven link */}
-                <a
+                <LinkButton
                   href={vendor.getproven_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-colors hover:bg-brand-700 active:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  variant="primary"
+                  className="w-full"
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                   View on GetProven
-                </a>
+                </LinkButton>
 
                 {/* Website */}
                 {vendor.website && (
-                  <a
+                  <LinkButton
                     href={vendor.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
                   >
                     <Globe className="h-4 w-4" aria-hidden="true" />
                     Visit Website
-                  </a>
+                  </LinkButton>
                 )}
 
                 {/* Brochure */}
                 {vendor.brochure && (
-                  <a
+                  <LinkButton
                     href={vendor.brochure}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
                   >
                     <FileText className="h-4 w-4" aria-hidden="true" />
                     Download Brochure
-                  </a>
+                  </LinkButton>
                 )}
 
                 {/* Contact Section - Only if contacts exist */}
@@ -840,7 +845,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                     </p>
                     <div className="space-y-4">
                       {contacts.slice(0, 3).map((contact) => (
-                        <div key={contact.id} className="flex items-start gap-3">
+                        <div key={contact.id} className="flex items-start gap-4">
                           {/* Avatar */}
                           {contact.avatar ? (
                             <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-slate-100">
@@ -890,7 +895,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
                       Connect
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex gap-4">
                       {vendor.linkedin && (
                         <a
                           href={vendor.linkedin.startsWith('http') ? vendor.linkedin : `https://linkedin.com/company/${vendor.linkedin}`}

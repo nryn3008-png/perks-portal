@@ -29,7 +29,8 @@ const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
+      // space-y-2 (8px) per DESIGN_SYSTEM.md, p-6 (24px) for card padding
+      className={cn('flex flex-col space-y-2 p-6', className)}
       {...props}
     />
   )

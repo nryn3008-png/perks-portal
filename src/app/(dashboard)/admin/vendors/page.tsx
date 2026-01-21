@@ -11,10 +11,10 @@
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X, Search, Shield, LayoutGrid, List, Building2, Gift, Users, Calendar } from 'lucide-react';
+import { AlertCircle, Loader2, Filter, X, Shield, LayoutGrid, List, Building2, Gift, Users, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button, Card } from '@/components/ui';
+import { Button, Card, SearchInput } from '@/components/ui';
 import { VendorsGrid } from '@/components/vendors';
 import type { GetProvenVendor } from '@/types';
 
@@ -87,7 +87,7 @@ function VendorsTable({
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <tr key={i}>
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <div className="h-10 w-10 rounded bg-slate-200 animate-pulse" />
                     <div className="h-4 w-32 rounded bg-slate-200 animate-pulse" />
                   </div>
@@ -142,7 +142,7 @@ function VendorsTable({
                   <td className="px-4 py-4">
                     <Link
                       href={`${basePath}/${vendor.id}`}
-                      className="flex items-center gap-3 group"
+                      className="flex items-center gap-4 group"
                     >
                       {/* Logo */}
                       {vendor.logo ? (
@@ -205,7 +205,7 @@ function VendorsTable({
                         {vendor.services.slice(0, 2).map((service, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600"
+                            className="inline-flex rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600"
                           >
                             {service.name}
                           </span>
@@ -391,7 +391,7 @@ function AdminVendorsPageContent() {
   return (
     <div className="space-y-6">
       {/* Admin Header */}
-      <div className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <div className="flex items-center gap-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
         <Shield className="h-5 w-5 text-amber-600" />
         <div>
           <h2 className="font-semibold text-amber-900">Admin Only</h2>
@@ -410,16 +410,16 @@ function AdminVendorsPageContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* View Mode Toggle */}
-          <div className="flex items-center rounded-lg border border-slate-200 bg-white p-1">
+        <div className="flex items-center gap-4">
+          {/* View Mode Toggle - Figma segmented pill toggle (node 4805-2967) */}
+          <div className="flex items-center">
             <button
               type="button"
               onClick={() => setViewMode('card')}
-              className={`flex items-center justify-center rounded-md p-2 transition-colors ${
+              className={`flex items-center justify-center px-2 py-2 rounded-l-full transition-colors ${
                 viewMode === 'card'
-                  ? 'bg-brand-600 text-white'
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                  ? 'bg-[#0038ff] text-white'
+                  : 'border-l border-t border-b border-[#b3b7c4] text-[#0d1531] hover:bg-[#f9f9fa]'
               }`}
               aria-label="Card view"
               aria-pressed={viewMode === 'card'}
@@ -429,10 +429,10 @@ function AdminVendorsPageContent() {
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`flex items-center justify-center rounded-md p-2 transition-colors ${
+              className={`flex items-center justify-center px-2 py-2 rounded-r-full transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-brand-600 text-white'
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                  ? 'bg-[#0038ff] text-white'
+                  : 'border-r border-t border-b border-[#b3b7c4] text-[#0d1531] hover:bg-[#f9f9fa]'
               }`}
               aria-label="Table view"
               aria-pressed={viewMode === 'table'}
@@ -441,16 +441,16 @@ function AdminVendorsPageContent() {
             </button>
           </div>
 
-          {/* Filter toggle button */}
+          {/* Filter toggle button - uses secondary when active to avoid competing with Search primary button */}
           {hasFilterOptions && (
             <Button
-              variant={showFilters ? 'primary' : 'outline'}
+              variant={showFilters ? 'secondary' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="mr-2 h-4 w-4" />
               Filters
               {hasActiveFilters && (
-                <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+                <span className="ml-2 rounded-full bg-brand-100 px-2 py-1 text-xs font-medium text-brand-700">
                   {(activeFilters.serviceName ? 1 : 0) + (activeFilters.groupName ? 1 : 0) + (activeFilters.search ? 1 : 0)}
                 </span>
               )}
@@ -461,24 +461,14 @@ function AdminVendorsPageContent() {
 
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
+        <div className="flex-1">
+          <SearchInput
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
+            onClear={clearSearch}
             placeholder="Search vendors..."
-            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+            aria-label="Search vendors"
           />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
         </div>
         <Button type="submit" variant="primary">
           Search
@@ -564,7 +554,7 @@ function AdminVendorsPageContent() {
       {/* Error State */}
       {error && (
         <div
-          className="flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-800"
+          className="flex items-center gap-4 rounded-lg bg-red-50 p-4 text-red-800"
           role="alert"
         >
           <AlertCircle className="h-5 w-5 flex-shrink-0" aria-hidden="true" />

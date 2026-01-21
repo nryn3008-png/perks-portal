@@ -82,7 +82,7 @@ function IndividualAccessPageContent() {
   return (
     <div className="space-y-6">
       {/* Admin Header */}
-      <div className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <div className="flex items-center gap-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
         <Shield className="h-5 w-5 text-amber-600" />
         <div>
           <h2 className="font-semibold text-amber-900">Admin Only</h2>
@@ -109,7 +109,7 @@ function IndividualAccessPageContent() {
       {/* Error State */}
       {error && (
         <div
-          className="flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-800"
+          className="flex items-center gap-4 rounded-lg bg-red-50 p-4 text-red-800"
           role="alert"
         >
           <AlertCircle className="h-5 w-5 flex-shrink-0" aria-hidden="true" />

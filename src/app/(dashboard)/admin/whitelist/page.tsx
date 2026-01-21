@@ -138,7 +138,7 @@ function WhitelistPageContent() {
   return (
     <div className="space-y-6">
       {/* Admin Header */}
-      <div className="flex items-center gap-3 rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <div className="flex items-center gap-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
         <Shield className="h-5 w-5 text-amber-600" />
         <div>
           <h2 className="font-semibold text-amber-900">Admin Only</h2>
@@ -191,7 +191,7 @@ function WhitelistPageContent() {
       {/* Upload Result */}
       {uploadResult && (
         <Card className={`p-4 ${uploadResult.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             {uploadResult.success ? (
               <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
             ) : (
@@ -220,7 +220,7 @@ function WhitelistPageContent() {
       {/* Error State */}
       {error && (
         <div
-          className="flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-800"
+          className="flex items-center gap-4 rounded-lg bg-red-50 p-4 text-red-800"
           role="alert"
         >
           <AlertCircle className="h-5 w-5 flex-shrink-0" aria-hidden="true" />

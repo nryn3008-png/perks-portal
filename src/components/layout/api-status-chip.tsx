@@ -92,7 +92,7 @@ export function ApiStatusChip({ isAdmin = false }: ApiStatusChipProps) {
   // Show subtle loading state
   if (isLoading) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-400">
+      <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-400">
         <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
         Checking...
       </span>
@@ -143,7 +143,7 @@ export function ApiStatusChip({ isAdmin = false }: ApiStatusChipProps) {
         onMouseEnter={() => setShowPopover(true)}
         onMouseLeave={() => setShowPopover(false)}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
+          'inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-medium',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1',
           config.bgClass,
           config.textClass
@@ -203,7 +203,7 @@ export function ApiStatusChip({ isAdmin = false }: ApiStatusChipProps) {
             // Non-admin view: generic message
             <div className="px-3 py-1">
               <p className="text-xs text-slate-600">System status</p>
-              <p className={cn('text-sm font-medium mt-0.5', config.textClass)}>
+              <p className={cn('text-sm font-medium mt-1', config.textClass)}>
                 {health.status === 'healthy'
                   ? 'All systems operational'
                   : health.status === 'degraded'

@@ -66,7 +66,7 @@ export function VendorCard({ vendor, basePath = '/admin/vendors', perksCount }: 
       <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)] transition-shadow group-hover:shadow-[0px_4px_14px_0px_rgba(0,0,0,0.15)]">
         {/* Header Section */}
         <div className="border-b border-slate-100 p-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {/* Logo */}
             {vendor.logo ? (
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
@@ -193,7 +193,7 @@ export function VendorCardSkeleton() {
     >
       {/* Header Section */}
       <div className="border-b border-slate-100 p-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* Logo placeholder */}
           <div className="h-12 w-12 shrink-0 rounded bg-[#ecedf0]" />
           {/* Name placeholder */}
@@ -202,7 +202,7 @@ export function VendorCardSkeleton() {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4">
         {/* Short line */}
         <div className="h-4 w-16 rounded-full bg-[#e6e8ed]" />
 
