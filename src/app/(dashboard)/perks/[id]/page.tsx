@@ -4,12 +4,10 @@ import { notFound } from 'next/navigation';
 import {
   ArrowLeft,
   ExternalLink,
-  Tag,
-  DollarSign,
   Mail,
   Info,
 } from 'lucide-react';
-import { Badge, Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
+import { Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
 import { CopyButton, OfferCard } from '@/components/perks';
 import { perksService, vendorsService } from '@/lib/api';
 import { findSimilarPerks } from '@/lib/similarity';
@@ -70,6 +68,50 @@ function formatValue(value: number | null): string {
     return `$${(value / 1000).toFixed(0)}K`;
   }
   return `$${value.toLocaleString()}`;
+}
+
+/**
+ * Format estimated value for badge display (matches OfferCard)
+ */
+function formatEstimatedValueBadge(value: number | null): string | null {
+  if (value === null || value === 0) return null;
+  if (value >= 1000) {
+    return `$${Math.round(value / 1000)}K value`;
+  }
+  return `$${value.toLocaleString()} value`;
+}
+
+/**
+ * Get deal type label (uppercased, matches OfferCard)
+ */
+function getDealTypeLabel(dealType: string | null): string {
+  if (!dealType) return 'OFFER';
+  return dealType.toUpperCase().replace('_', ' ');
+}
+
+/**
+ * Color Label Badge - matches OfferCard ColorLabels component
+ */
+function ColorLabel({
+  text,
+  color,
+}: {
+  text: string;
+  color: 'green' | 'blue' | 'grey';
+}) {
+  const styles = {
+    green: 'bg-[#e7f6ea] border-[#dbf1e0] text-[#005f15]',
+    blue: 'bg-[#eef4ff] border-[#e6eeff] text-[#0036d7]',
+    grey: 'bg-[#f9f9fa] border-[#ecedf0] text-[#3d445a]',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded border px-2 text-sm font-semibold leading-6 tracking-[0.4px] ${styles[color]}`}
+    >
+      {text}
+    </span>
+  );
 }
 
 /**
@@ -164,11 +206,11 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main Content Column */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Header Section */}
+          {/* Header Section - matches OfferCard design pattern */}
           <header className="space-y-4">
-            {/* Vendor logo + name row - Figma design pattern */}
+            {/* Vendor logo + name row */}
             <div className="flex items-center gap-4">
-              {/* Vendor logo - 48x48 with Figma placeholder fallback */}
+              {/* Vendor logo - 48x48 with placeholder fallback */}
               {vendor?.logo ? (
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-[#ecedf0]">
                   <Image
@@ -186,106 +228,69 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                 </div>
               )}
 
-              {/* Vendor name - only if available */}
-              {vendor?.name && (
-                <p className="flex-1 text-base font-bold leading-[22px] text-[#3d445a]">
-                  {vendor.name}
-                </p>
-              )}
-            </div>
-
-            {/* Title row */}
-            <div className="space-y-1">
-              {/* Deal type - subtle */}
-              {offer.deal_type && (
-                <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-                  {offer.deal_type}
-                </p>
-              )}
-
-              {/* Name - strongest visual element */}
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                {offer.name}
-              </h1>
-            </div>
-
-            {/* Meta row - categories, investment levels */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              {/* Categories */}
-              {offer.offer_categories.length > 0 && (
-                offer.offer_categories.map((cat) => (
-                  <span
-                    key={cat.name}
-                    className="flex items-center gap-2 text-sm text-slate-600"
-                  >
-                    <Tag className="h-3.5 w-3.5" aria-hidden="true" />
-                    {cat.name}
-                  </span>
-                ))
-              )}
-
-              {/* Investment levels */}
-              {offer.investment_levels.length > 0 && (
-                offer.investment_levels.map((level) => (
-                  <Badge key={level.name} variant="default" className="text-xs">
-                    {level.name}
-                  </Badge>
-                ))
-              )}
-            </div>
-          </header>
-
-          {/* Value Highlight */}
-          {(offer.estimated_value || discountDisplay || offer.old_price || offer.new_price) && (
-            <section
-              className="rounded-2xl bg-gradient-to-br from-brand-50 via-brand-50 to-brand-100 p-6 sm:p-8 border border-brand-100"
-              aria-labelledby="value-heading"
-            >
-              <p
-                id="value-heading"
-                className="text-sm font-semibold uppercase tracking-wide text-brand-600 mb-2"
-              >
-                Offer Value
-              </p>
-
-              <div className="space-y-2">
-                {/* Estimated value */}
-                {offer.estimated_value && (
-                  <p className="text-3xl sm:text-4xl font-bold text-brand-900">
-                    {formatValue(offer.estimated_value)}
-                    {offer.estimated_value_type && (
-                      <span className="ml-2 text-lg font-normal text-brand-600">
-                        {offer.estimated_value_type}
-                      </span>
-                    )}
+              {/* Vendor name + primary service */}
+              {vendor && (
+                <div className="min-w-0 flex-1">
+                  <p className="text-base font-bold leading-[22px] text-[#3d445a]">
+                    {vendor.name}
                   </p>
-                )}
+                  {vendor.primary_service && (
+                    <p className="text-xs leading-[18px] tracking-[0.4px] text-[#81879c]">
+                      {vendor.primary_service}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
 
-                {/* Discount */}
-                {discountDisplay && (
-                  <Badge variant="success" className="text-sm px-3 py-1">
-                    {discountDisplay}
-                  </Badge>
-                )}
+            {/* Deal type label */}
+            <p className="text-xs font-semibold uppercase tracking-[0.4px] text-[#81879c]">
+              {getDealTypeLabel(offer.deal_type)}
+            </p>
 
-                {/* Price comparison */}
-                {(offer.old_price || offer.new_price) && (
-                  <div className="flex items-center gap-4 pt-2">
-                    {offer.old_price && (
-                      <span className="text-lg text-slate-400 line-through">
-                        ${offer.old_price.toLocaleString()}
-                      </span>
-                    )}
-                    {offer.new_price && (
-                      <span className="text-xl font-semibold text-brand-700">
-                        ${offer.new_price.toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-                )}
+            {/* Offer title - primary heading */}
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
+              {offer.name}
+            </h1>
+
+            {/* Value badges row - matches OfferCard pattern */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Discount badge (green) */}
+              {discountDisplay && (
+                <ColorLabel text={discountDisplay} color="green" />
+              )}
+
+              {/* Estimated value badge (blue) */}
+              {formatEstimatedValueBadge(offer.estimated_value) && (
+                <ColorLabel text={formatEstimatedValueBadge(offer.estimated_value)!} color="blue" />
+              )}
+
+              {/* Price comparison */}
+              {(offer.old_price || offer.new_price) && (
+                <div className="flex items-center gap-2">
+                  {offer.old_price && (
+                    <span className="text-sm text-[#81879c] line-through">
+                      ${offer.old_price.toLocaleString()}
+                    </span>
+                  )}
+                  {offer.new_price && (
+                    <span className="text-sm font-semibold text-[#3d445a]">
+                      ${offer.new_price.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Investment levels row */}
+            {offer.investment_levels.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {offer.investment_levels.map((level) => (
+                  <ColorLabel key={level.name} text={level.name} color="grey" />
+                ))}
               </div>
-            </section>
-          )}
+            )}
+          </header>
 
           {/* Description Section */}
           {offer.description && (
@@ -328,40 +333,32 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
             </section>
           )}
 
-          {/* Terms and Conditions */}
+          {/* Terms and Conditions - collapsed by default */}
           {hasTerms && (
-            <section aria-labelledby="terms-heading">
-              <h2
-                id="terms-heading"
-                className="text-lg font-semibold text-slate-900 mb-4"
-              >
-                Terms and Conditions
-              </h2>
-              <Card className="border-slate-200">
-                <CardContent className="p-5 sm:p-6 space-y-4">
-                  {/* Terms text */}
-                  {offer.terms_and_conditions_text && (
-                    <div
-                      className="prose prose-slate prose-sm max-w-none text-slate-600"
-                      dangerouslySetInnerHTML={{ __html: offer.terms_and_conditions_text }}
-                    />
-                  )}
+            <Disclosure trigger="Terms and Conditions">
+              <div className="space-y-4">
+                {/* Terms text */}
+                {offer.terms_and_conditions_text && (
+                  <div
+                    className="prose prose-slate prose-sm max-w-none text-slate-600"
+                    dangerouslySetInnerHTML={{ __html: offer.terms_and_conditions_text }}
+                  />
+                )}
 
-                  {/* Terms URL link */}
-                  {offer.terms_and_conditions && (
-                    <a
-                      href={offer.terms_and_conditions}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 hover:underline"
-                    >
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                      View Full Terms
-                    </a>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
+                {/* Terms URL link */}
+                {offer.terms_and_conditions && (
+                  <a
+                    href={offer.terms_and_conditions}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 hover:underline"
+                  >
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                    View Full Terms
+                  </a>
+                )}
+              </div>
+            </Disclosure>
           )}
 
         </div>
@@ -450,22 +447,10 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                   Redeem Offer
                 </LinkButton>
 
-                {/* Value highlight in sidebar */}
-                {(offer.estimated_value || discountDisplay) && (
-                  <div className="border-t border-slate-100 pt-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
-                      Offer Value
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5 text-emerald-500" aria-hidden="true" />
-                      <span className="font-semibold text-slate-900">
-                        {offer.estimated_value
-                          ? formatValue(offer.estimated_value)
-                          : discountDisplay}
-                      </span>
-                    </div>
-                  </div>
-                )}
+                {/* Helper text */}
+                <p className="text-xs text-center text-slate-500">
+                  You&apos;ll be redirected to complete redemption
+                </p>
               </div>
             </CardContent>
           </Card>
