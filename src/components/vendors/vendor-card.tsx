@@ -11,7 +11,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, Badge } from '@/components/ui';
 import { Building2, Users, Calendar, Gift } from 'lucide-react';
 import type { GetProvenVendor } from '@/types';
 
@@ -62,88 +61,96 @@ export function VendorCard({ vendor, basePath = '/admin/vendors', perksCount }: 
   return (
     <Link
       href={`${basePath}/${vendor.id}`}
-      className="block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+      className="group block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
     >
-      <Card hover className="h-full">
-        <div className="p-5">
-          {/* Logo */}
-          {vendor.logo ? (
-            <div className="mb-4 flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-              <Image
-                src={vendor.logo}
-                alt=""
-                width={48}
-                height={48}
-                className="h-full w-full object-contain"
-                unoptimized
-              />
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)] transition-shadow group-hover:shadow-[0px_4px_14px_0px_rgba(0,0,0,0.15)]">
+        {/* Header Section */}
+        <div className="border-b border-slate-100 p-4">
+          <div className="flex items-center gap-3">
+            {/* Logo */}
+            {vendor.logo ? (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
+                <Image
+                  src={vendor.logo}
+                  alt={`${vendor.name} logo`}
+                  width={48}
+                  height={48}
+                  className="h-full w-full object-contain"
+                  unoptimized
+                />
+              </div>
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-slate-100">
+                <Building2 className="h-6 w-6 text-slate-400" aria-hidden="true" />
+              </div>
+            )}
+
+            {/* Name and Primary Service */}
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate font-mulish text-base font-bold leading-[22px] text-[#3d445a]">
+                {vendor.name}
+              </h3>
+              {vendor.primary_service && (
+                <p className="truncate font-mulish text-xs leading-[18px] tracking-[0.4px] text-[#81879c]">
+                  {vendor.primary_service}
+                </p>
+              )}
             </div>
-          ) : (
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100">
-              <Building2 className="h-6 w-6 text-slate-400" />
-            </div>
-          )}
+          </div>
+        </div>
 
-          {/* Name */}
-          <h3 className="text-lg font-semibold text-slate-900 line-clamp-2">
-            {vendor.name}
-          </h3>
-
-          {/* Primary service */}
-          {vendor.primary_service && (
-            <p className="mt-1 text-sm font-medium text-brand-600">
-              {vendor.primary_service}
-            </p>
-          )}
-
+        {/* Content Section */}
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {/* Description */}
           {description && (
-            <p className="mt-2 text-sm text-slate-600 line-clamp-2">
+            <p className="line-clamp-2 font-mulish text-sm leading-5 tracking-[0.4px] text-[#676c7e]">
               {description}
             </p>
           )}
 
-          {/* Meta info */}
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-            {/* Perks count */}
-            {perksCount !== undefined && (
-              <span className="flex items-center gap-1">
-                <Gift className="h-3.5 w-3.5" />
-                {perksCount} {perksCount === 1 ? 'perk' : 'perks'}
-              </span>
-            )}
+          {/* Meta info row */}
+          {(perksCount !== undefined || employeeRange || vendor.founded) && (
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Perks count */}
+              {perksCount !== undefined && (
+                <span className="flex items-center gap-1 font-mulish text-xs leading-[18px] tracking-[0.4px] text-[#81879c]">
+                  <Gift className="h-4 w-4" aria-hidden="true" />
+                  {perksCount} {perksCount === 1 ? 'perk' : 'perks'}
+                </span>
+              )}
 
-            {/* Employees */}
-            {employeeRange && (
-              <span className="flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {employeeRange}
-              </span>
-            )}
+              {/* Employees */}
+              {employeeRange && (
+                <span className="flex items-center gap-1 font-mulish text-xs leading-[18px] tracking-[0.4px] text-[#81879c]">
+                  <Users className="h-4 w-4" aria-hidden="true" />
+                  {employeeRange}
+                </span>
+              )}
 
-            {/* Founded */}
-            {vendor.founded && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5" />
-                Est. {vendor.founded}
-              </span>
-            )}
-          </div>
+              {/* Founded */}
+              {vendor.founded && (
+                <span className="flex items-center gap-1 font-mulish text-xs leading-[18px] tracking-[0.4px] text-[#81879c]">
+                  <Calendar className="h-4 w-4" aria-hidden="true" />
+                  Est. {vendor.founded}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Services */}
           {vendor.services.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1">
+            <div className="flex flex-wrap items-center gap-2">
               {vendor.services.slice(0, 3).map((service, idx) => (
                 <span
                   key={idx}
-                  className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+                  className="inline-flex rounded border border-[#ecedf0] bg-[#f9f9fa] px-2 py-0 font-mulish text-sm font-semibold leading-6 tracking-[0.4px] text-[#3d445a]"
                 >
                   {service.name}
                 </span>
               ))}
               {vendor.services.length > 3 && (
-                <span className="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
-                  +{vendor.services.length - 3} more
+                <span className="font-mulish text-xs leading-[18px] tracking-[0.4px] text-[#676c7e]">
+                  +{vendor.services.length - 3}
                 </span>
               )}
             </div>
@@ -151,23 +158,76 @@ export function VendorCard({ vendor, basePath = '/admin/vendors', perksCount }: 
 
           {/* Vendor groups */}
           {vendor.vendor_groups.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="flex flex-wrap items-center gap-2">
               {vendor.vendor_groups.map((group, idx) => (
-                <Badge key={idx} variant="info" className="text-xs">
+                <span
+                  key={idx}
+                  className="inline-flex rounded border border-[#e6eeff] bg-[#eef4ff] px-2 py-0 font-mulish text-sm font-semibold leading-6 tracking-[0.4px] text-[#0036d7]"
+                >
                   {group.name}
-                </Badge>
+                </span>
               ))}
             </div>
           )}
-
-          {/* CTA */}
-          <div className="mt-4">
-            <span className="text-sm font-medium text-brand-600 group-hover:text-brand-700">
-              View Vendor →
-            </span>
-          </div>
         </div>
-      </Card>
+
+        {/* Footer Section */}
+        <div className="border-t border-slate-100 p-4">
+          <span className="font-mulish text-sm font-semibold leading-6 tracking-[0.4px] text-[#0038ff]">
+            View vendor
+          </span>
+        </div>
+      </div>
     </Link>
+  );
+}
+
+/**
+ * Vendor Card Skeleton for loading state
+ */
+export function VendorCardSkeleton() {
+  return (
+    <div
+      className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]"
+      aria-hidden="true"
+    >
+      {/* Header Section */}
+      <div className="border-b border-slate-100 p-4">
+        <div className="flex items-center gap-3">
+          {/* Logo placeholder */}
+          <div className="h-12 w-12 shrink-0 rounded bg-[#ecedf0]" />
+          {/* Name placeholder */}
+          <div className="h-4 w-[154px] rounded-full bg-[#e6e8ed]" />
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        {/* Short line */}
+        <div className="h-4 w-16 rounded-full bg-[#e6e8ed]" />
+
+        {/* Description lines */}
+        <div className="flex flex-col gap-1">
+          <div className="h-3.5 w-full rounded-full bg-[#e6e8ed]" />
+          <div className="h-3.5 w-full rounded-full bg-[#e6e8ed]" />
+        </div>
+
+        {/* More skeleton lines */}
+        <div className="flex flex-col gap-1">
+          <div className="h-3.5 w-[272px] max-w-full rounded-full bg-[#e6e8ed]" />
+          <div className="h-3.5 w-[249px] max-w-full rounded-full bg-[#e6e8ed]" />
+          <div className="h-3.5 w-[113px] rounded-full bg-[#e6e8ed]" />
+        </div>
+
+        {/* Tag placeholders */}
+        <div className="h-4 w-[154px] rounded-full bg-[#e6e8ed]" />
+        <div className="h-4 w-[154px] rounded-full bg-[#e6e8ed]" />
+      </div>
+
+      {/* Footer Section */}
+      <div className="flex h-14 items-center border-t border-slate-100 p-4">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-400" />
+      </div>
+    </div>
   );
 }

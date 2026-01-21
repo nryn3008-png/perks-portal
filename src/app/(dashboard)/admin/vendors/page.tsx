@@ -11,10 +11,14 @@
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X, Search, Shield } from 'lucide-react';
+import { AlertCircle, Loader2, Filter, X, Search, Shield, LayoutGrid, List, Building2, Gift, Users, Calendar } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { Button, Card } from '@/components/ui';
 import { VendorsGrid } from '@/components/vendors';
 import type { GetProvenVendor } from '@/types';
+
+type ViewMode = 'card' | 'table';
 
 const PAGE_SIZE = 24;
 
@@ -27,6 +31,203 @@ interface ActiveFilters {
   search: string;
   serviceName: string;
   groupName: string;
+}
+
+/**
+ * Format employee range
+ */
+function formatEmployeeRange(min: number | null, max: number | null): string | null {
+  if (min === null && max === null) return null;
+  if (min !== null && max !== null) {
+    return `${min}-${max}`;
+  }
+  if (min !== null) {
+    return `${min}+`;
+  }
+  if (max !== null) {
+    return `Up to ${max}`;
+  }
+  return null;
+}
+
+/**
+ * Vendors Table Component
+ */
+interface VendorsTableProps {
+  vendors: GetProvenVendor[];
+  isLoading?: boolean;
+  emptyMessage?: string;
+  basePath?: string;
+  perksCountMap?: Record<number, number>;
+}
+
+function VendorsTable({
+  vendors,
+  isLoading = false,
+  emptyMessage = 'No vendors found',
+  basePath = '/admin/vendors',
+  perksCountMap,
+}: VendorsTableProps) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <table className="w-full">
+          <thead className="border-b border-slate-200 bg-slate-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Vendor</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Primary Service</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Perks</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Employees</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Founded</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Services</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <tr key={i}>
+                <td className="px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-4 w-32 rounded bg-slate-200 animate-pulse" />
+                  </div>
+                </td>
+                <td className="px-4 py-4"><div className="h-4 w-24 rounded bg-slate-200 animate-pulse" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-12 rounded bg-slate-200 animate-pulse" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-16 rounded bg-slate-200 animate-pulse" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-12 rounded bg-slate-200 animate-pulse" /></td>
+                <td className="px-4 py-4"><div className="h-4 w-40 rounded bg-slate-200 animate-pulse" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (vendors.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 py-16">
+        <p className="text-slate-500">{emptyMessage}</p>
+      </div>
+    );
+  }
+
+  // Table view
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="border-b border-slate-200 bg-slate-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Vendor</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Primary Service</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Perks</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Employees</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Founded</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600">Services</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {vendors.map((vendor) => {
+              const employeeRange = formatEmployeeRange(vendor.employee_min, vendor.employee_max);
+              const perksCount = perksCountMap?.[vendor.id];
+
+              return (
+                <tr
+                  key={vendor.id}
+                  className="transition-colors hover:bg-slate-50"
+                >
+                  <td className="px-4 py-4">
+                    <Link
+                      href={`${basePath}/${vendor.id}`}
+                      className="flex items-center gap-3 group"
+                    >
+                      {/* Logo */}
+                      {vendor.logo ? (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-slate-100">
+                          <Image
+                            src={vendor.logo}
+                            alt={`${vendor.name} logo`}
+                            width={40}
+                            height={40}
+                            className="h-full w-full object-contain"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-100">
+                          <Building2 className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                        </div>
+                      )}
+                      <span className="font-medium text-slate-900 group-hover:text-brand-600">
+                        {vendor.name}
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-slate-600">
+                    {vendor.primary_service || <span className="text-slate-400">—</span>}
+                  </td>
+                  <td className="px-4 py-4">
+                    {perksCount !== undefined ? (
+                      <span className="inline-flex items-center gap-1 text-sm text-slate-600">
+                        <Gift className="h-3.5 w-3.5 text-slate-400" />
+                        {perksCount}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    {employeeRange ? (
+                      <span className="inline-flex items-center gap-1 text-sm text-slate-600">
+                        <Users className="h-3.5 w-3.5 text-slate-400" />
+                        {employeeRange}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    {vendor.founded ? (
+                      <span className="inline-flex items-center gap-1 text-sm text-slate-600">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        {vendor.founded}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4">
+                    {vendor.services.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {vendor.services.slice(0, 2).map((service, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600"
+                          >
+                            {service.name}
+                          </span>
+                        ))}
+                        {vendor.services.length > 2 && (
+                          <span className="text-xs text-slate-500">
+                            +{vendor.services.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
 function AdminVendorsPageContent() {
@@ -51,6 +252,7 @@ function AdminVendorsPageContent() {
   });
   const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
 
   // Fetch filter options from API
   const fetchFilterOptions = useCallback(async () => {
@@ -208,21 +410,53 @@ function AdminVendorsPageContent() {
           </p>
         </div>
 
-        {/* Filter toggle button */}
-        {hasFilterOptions && (
-          <Button
-            variant={showFilters ? 'primary' : 'outline'}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-            {hasActiveFilters && (
-              <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
-                {(activeFilters.serviceName ? 1 : 0) + (activeFilters.groupName ? 1 : 0) + (activeFilters.search ? 1 : 0)}
-              </span>
-            )}
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {/* View Mode Toggle */}
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode('card')}
+              className={`flex items-center justify-center rounded-md p-2 transition-colors ${
+                viewMode === 'card'
+                  ? 'bg-brand-600 text-white'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              }`}
+              aria-label="Card view"
+              aria-pressed={viewMode === 'card'}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('table')}
+              className={`flex items-center justify-center rounded-md p-2 transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-brand-600 text-white'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+              }`}
+              aria-label="Table view"
+              aria-pressed={viewMode === 'table'}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Filter toggle button */}
+          {hasFilterOptions && (
+            <Button
+              variant={showFilters ? 'primary' : 'outline'}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+              {hasActiveFilters && (
+                <span className="ml-2 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+                  {(activeFilters.serviceName ? 1 : 0) + (activeFilters.groupName ? 1 : 0) + (activeFilters.search ? 1 : 0)}
+                </span>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -355,14 +589,24 @@ function AdminVendorsPageContent() {
             : `${totalCount} ${totalCount === 1 ? 'vendor' : 'vendors'} found`}
         </p>
 
-        {/* Vendors Grid */}
-        <VendorsGrid
-          vendors={vendors}
-          isLoading={isLoading}
-          emptyMessage="No vendors found"
-          basePath="/admin/vendors"
-          perksCountMap={perksCountMap}
-        />
+        {/* Vendors Grid or Table */}
+        {viewMode === 'card' ? (
+          <VendorsGrid
+            vendors={vendors}
+            isLoading={isLoading}
+            emptyMessage="No vendors found"
+            basePath="/admin/vendors"
+            perksCountMap={perksCountMap}
+          />
+        ) : (
+          <VendorsTable
+            vendors={vendors}
+            isLoading={isLoading}
+            emptyMessage="No vendors found"
+            basePath="/admin/vendors"
+            perksCountMap={perksCountMap}
+          />
+        )}
 
         {/* Load More Button */}
         {nextUrl && !isLoading && (

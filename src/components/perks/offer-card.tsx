@@ -181,7 +181,7 @@ function ColorLabel({
  */
 function OfferCardSkeleton() {
   return (
-    <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)]">
       {/* Header - logo + vendor name placeholder */}
       <div className="border-b border-[#f2f3f5] p-4">
         <div className="flex items-center gap-3">
@@ -194,7 +194,7 @@ function OfferCardSkeleton() {
       </div>
 
       {/* Content - skeleton bars matching Figma layout */}
-      <div className="flex flex-col gap-4 bg-white p-4">
+      <div className="flex flex-1 flex-col gap-4 bg-white p-4">
         {/* Label skeleton */}
         <div className="h-[18px] w-[50px] rounded bg-[#e6e8ed]" />
 
@@ -204,11 +204,10 @@ function OfferCardSkeleton() {
           <div className="h-5 w-[85%] rounded bg-[#e6e8ed]" />
         </div>
 
-        {/* Description skeleton - three lines */}
+        {/* Description skeleton - two lines (bounded) */}
         <div className="flex flex-col gap-1.5">
           <div className="h-4 w-full rounded bg-[#e6e8ed]" />
           <div className="h-4 w-[90%] rounded bg-[#e6e8ed]" />
-          <div className="h-4 w-[40%] rounded bg-[#e6e8ed]" />
         </div>
 
         {/* Value tags skeleton */}
@@ -225,8 +224,8 @@ function OfferCardSkeleton() {
         </div>
       </div>
 
-      {/* Footer with spinner */}
-      <div className="flex h-14 items-center border-t border-[#f2f3f5] bg-white p-4">
+      {/* Footer with spinner - pinned to bottom */}
+      <div className="flex items-center border-t border-[#f2f3f5] bg-white p-4">
         <Loader2 className="h-5 w-5 animate-spin text-[#81879c]" />
       </div>
     </div>
@@ -283,100 +282,99 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
   return (
     <Link
       href={`/perks/${offer.id}`}
-      className="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+      className="group block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
     >
-      <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)] transition-shadow hover:shadow-[0px_6px_20px_0px_rgba(0,0,0,0.15)]">
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-[0px_3px_10px_0px_rgba(0,0,0,0.1)] transition-shadow group-hover:shadow-[0px_6px_20px_0px_rgba(0,0,0,0.15)]">
 
         {/* ═══════════════════════════════════════════════════════════════════
             HEADER (List item) - Figma node: List item
+            Fixed height slot for vendor info
             ═══════════════════════════════════════════════════════════════════ */}
         <div className="border-b border-[#f2f3f5] bg-white p-4">
-          <div className="flex w-full items-center">
-            <div className="flex flex-1 items-center gap-3">
-              <VendorLogo src={picture} />
-              {vendorName && (
-                <p className="flex-1 text-base font-bold leading-[22px] text-[#3d445a]">
-                  {vendorName}
-                </p>
-              )}
-            </div>
+          <div className="flex items-center gap-3">
+            <VendorLogo src={picture} />
+            {vendorName && (
+              <p className="min-w-0 flex-1 truncate text-base font-bold leading-[22px] text-[#3d445a]">
+                {vendorName}
+              </p>
+            )}
           </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════════
             CONTENT (Feed item content) - Figma node: Feed item content
+            Flex-1 to fill available space and push footer down
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="bg-white p-4">
-          <div className="flex flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-4 bg-white p-4">
 
-            {/* Deal type label - Figma node: Solid label */}
-            <div className="inline-flex w-fit items-center rounded border border-[#b3b7c4] px-[7px] py-1">
-              <span className="text-[8px] font-bold uppercase leading-[8px] tracking-[1px] text-[#81879c]">
-                {dealTypeLabel}
-              </span>
-            </div>
+          {/* Deal type label - Figma node: Solid label */}
+          <div className="inline-flex w-fit items-center rounded border border-[#b3b7c4] px-[7px] py-1">
+            <span className="text-[8px] font-bold uppercase leading-[8px] tracking-[1px] text-[#81879c]">
+              {dealTypeLabel}
+            </span>
+          </div>
 
-            {/* Title & Description - Figma node: Content */}
-            <div className="flex flex-col gap-1">
-              {/* Title */}
-              <h3 className="text-base font-bold leading-[22px] text-[#0d1531]">
-                {name}
-              </h3>
+          {/* Title & Description - Figma node: Content */}
+          <div className="flex flex-col gap-1">
+            {/* Title - bounded to 2 lines */}
+            <h3 className="line-clamp-2 text-base font-bold leading-[22px] text-[#0d1531]">
+              {name}
+            </h3>
 
-              {/* Description - only if showDescription */}
-              {showDescription && (
-                <p className="h-[60px] overflow-hidden text-sm font-normal leading-5 tracking-[0.4px] text-[#676c7e]">
-                  {description}
+            {/* Description - bounded to 2 lines, only if present */}
+            {showDescription && (
+              <p className="line-clamp-2 text-sm font-normal leading-5 tracking-[0.4px] text-[#676c7e]">
+                {description}
+              </p>
+            )}
+          </div>
+
+          {/* Value Tags Section - only if valueTag */}
+          {valueTag && (
+            <div className="flex flex-col gap-3">
+              {/* Discount & Value badges */}
+              <div className="flex flex-wrap gap-2">
+                {/* Green discount badge - only if discountValue */}
+                {discountValue && formattedDiscount && (
+                  <ColorLabel text={formattedDiscount} color="green" />
+                )}
+
+                {/* Blue value badge - only if priceValue */}
+                {priceValue && formattedValue && (
+                  <ColorLabel text={formattedValue} color="blue" />
+                )}
+              </div>
+
+              {/* Price difference - only if priceDifference */}
+              {priceDifference && (
+                <p className="text-base font-bold leading-[22px] text-[#0d1531]">
+                  <span className="text-[#9a9fb0] line-through">
+                    ${oldPrice!.toLocaleString()}
+                  </span>{' '}
+                  ${newPrice!.toLocaleString()}
                 </p>
               )}
             </div>
+          )}
 
-            {/* Value Tags Section - only if valueTag */}
-            {valueTag && (
-              <div className="flex flex-col gap-3">
-                {/* Discount & Value badges */}
-                <div className="flex flex-wrap gap-2">
-                  {/* Green discount badge - only if discountValue */}
-                  {discountValue && formattedDiscount && (
-                    <ColorLabel text={formattedDiscount} color="green" />
-                  )}
-
-                  {/* Blue value badge - only if priceValue */}
-                  {priceValue && formattedValue && (
-                    <ColorLabel text={formattedValue} color="blue" />
-                  )}
-                </div>
-
-                {/* Price difference - only if priceDifference */}
-                {priceDifference && (
-                  <p className="text-base font-bold leading-[22px] text-[#0d1531]">
-                    <span className="text-[#9a9fb0] line-through">
-                      ${oldPrice!.toLocaleString()}
-                    </span>{' '}
-                    ${newPrice!.toLocaleString()}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Investment Levels - only if present */}
-            {investmentLevels.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {visibleLevels.map((level, idx) => (
-                  <ColorLabel key={idx} text={level.name} color="grey" />
-                ))}
-                {remainingCount > 0 && (
-                  <span className="text-xs font-normal leading-[18px] tracking-[0.4px] text-[#676c7e]">
-                    +{remainingCount}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Investment Levels - only if present */}
+          {investmentLevels.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              {visibleLevels.map((level, idx) => (
+                <ColorLabel key={idx} text={level.name} color="grey" />
+              ))}
+              {remainingCount > 0 && (
+                <span className="text-xs font-normal leading-[18px] tracking-[0.4px] text-[#676c7e]">
+                  +{remainingCount}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════════
             FOOTER (Feed item actions) - Figma node: Feed item actions
+            Pinned to bottom via flex layout
             ═══════════════════════════════════════════════════════════════════ */}
         <div className="border-t border-[#f2f3f5] bg-white p-4">
           <span className="text-sm font-semibold leading-6 tracking-[0.4px] text-[#0038ff]">
