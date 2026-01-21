@@ -238,7 +238,7 @@ function PerksPageContent() {
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-slate-900 text-white'
+                  ? 'bg-[#0038ff] text-white'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
               aria-pressed={viewMode === 'grid'}
@@ -252,7 +252,7 @@ function PerksPageContent() {
               onClick={() => setViewMode('grouped')}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 viewMode === 'grouped'
-                  ? 'bg-slate-900 text-white'
+                  ? 'bg-[#0038ff] text-white'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
               aria-pressed={viewMode === 'grouped'}
