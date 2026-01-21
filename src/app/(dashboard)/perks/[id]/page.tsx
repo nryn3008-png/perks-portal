@@ -12,6 +12,7 @@ import {
 import { Badge, Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
 import { CopyButton, OfferCard } from '@/components/perks';
 import { perksService, vendorsService } from '@/lib/api';
+import { findSimilarPerks } from '@/lib/similarity';
 import type { GetProvenDeal, GetProvenVendor } from '@/types';
 import { Building2, Globe, Hash, Database } from 'lucide-react';
 
@@ -109,25 +110,43 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
   const showRedemption = hasRedemptionDetails(offer);
   const hasTerms = offer.terms_and_conditions_text || offer.terms_and_conditions;
 
-  // Fetch vendor data and all perks in parallel (for related perks)
+  // Fetch vendor data, all perks, and all vendors in parallel
   let vendor: GetProvenVendor | null = null;
   let relatedPerks: GetProvenDeal[] = [];
+  let similarPerks: GetProvenDeal[] = [];
+  let vendorMap: Record<number, { logo: string | null; name: string; primaryService: string | null }> = {};
 
   if (offer.vendor_id) {
-    const [vendorResult, allPerksResult] = await Promise.all([
+    const [vendorResult, allPerksResult, allVendorsResult] = await Promise.all([
       vendorsService.getVendorById(String(offer.vendor_id)),
       perksService.getOffers(1, 1000), // Fetch all perks for filtering
+      vendorsService.getVendors(1, 1000), // Fetch all vendors for vendor map
     ]);
 
     if (vendorResult.success && vendorResult.data) {
       vendor = vendorResult.data;
     }
 
+    // Build vendor map for similar perks display
+    if (allVendorsResult.success && allVendorsResult.data) {
+      for (const v of allVendorsResult.data.data) {
+        vendorMap[v.id] = {
+          logo: v.logo,
+          name: v.name,
+          primaryService: v.primary_service,
+        };
+      }
+    }
+
     // Filter related perks: same vendor, exclude current offer
     if (allPerksResult.success && allPerksResult.data) {
-      relatedPerks = allPerksResult.data.data.filter(
+      const allPerks = allPerksResult.data.data;
+      relatedPerks = allPerks.filter(
         (perk) => perk.vendor_id === offer.vendor_id && perk.id !== offer.id
       );
+
+      // Find similar perks from OTHER vendors
+      similarPerks = findSimilarPerks(offer, allPerks, 4);
     }
   }
 
@@ -472,6 +491,35 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                 vendorPrimaryService={vendor.primary_service}
               />
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Similar Perks Section - Perks from OTHER vendors with similar attributes */}
+      {similarPerks.length > 0 && (
+        <section aria-labelledby="similar-perks-heading" className="mt-12 pt-8 border-t border-slate-200">
+          <h3
+            id="similar-perks-heading"
+            className="text-base font-semibold text-slate-700 mb-4"
+          >
+            Similar Perks
+          </h3>
+          <p className="text-sm text-slate-500 mb-6">
+            Other offers you might find useful
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {similarPerks.map((perk) => {
+              const perkVendor = vendorMap[perk.vendor_id];
+              return (
+                <OfferCard
+                  key={perk.id}
+                  offer={perk}
+                  vendorLogo={perkVendor?.logo}
+                  vendorName={perkVendor?.name}
+                  vendorPrimaryService={perkVendor?.primaryService}
+                />
+              );
+            })}
           </div>
         </section>
       )}

@@ -30,7 +30,9 @@ import {
 import { Badge, Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
 import { vendorsService, perksService } from '@/lib/api';
 import { OfferCard } from '@/components/perks';
-import type { GetProvenVendor, VendorClient, VendorUser } from '@/types';
+import { VendorCard } from '@/components/vendors';
+import { findSimilarVendors } from '@/lib/similarity';
+import type { GetProvenDeal, GetProvenVendor, VendorClient, VendorUser } from '@/types';
 
 /**
  * Admin Vendor Detail Page
@@ -83,13 +85,14 @@ function getYouTubeEmbedUrl(url: string): string | null {
 export default async function AdminVendorDetailPage({ params }: AdminVendorDetailPageProps) {
   const { id } = await params;
 
-  // Fetch all vendor data in parallel (including perks for filtering)
-  const [vendorResult, clientsResult, contactsResult, allUsersResult, perksResult] = await Promise.all([
+  // Fetch all vendor data in parallel (including perks and all vendors for similarity)
+  const [vendorResult, clientsResult, contactsResult, allUsersResult, perksResult, allVendorsResult] = await Promise.all([
     vendorsService.getVendorById(id),
     vendorsService.getVendorClients(id),
     vendorsService.getVendorContacts(id),
     vendorsService.getAllVendorUsers(id),
     perksService.getOffers(1, 1000), // Fetch all perks to filter client-side
+    vendorsService.getVendors(1, 1000), // Fetch all vendors for similarity
   ]);
 
   if (!vendorResult.success || !vendorResult.data) {
@@ -102,8 +105,18 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
   const allUsers = allUsersResult.success ? allUsersResult.data : [];
 
   // Filter perks for this vendor
-  const allPerks = perksResult.success ? perksResult.data.data : [];
+  const allPerks: GetProvenDeal[] = perksResult.success ? perksResult.data.data : [];
   const vendorPerks = allPerks.filter((perk) => perk.vendor_id === vendor.id);
+
+  // Find similar vendors (vendors with similar services/industries that have perks)
+  const allVendors: GetProvenVendor[] = allVendorsResult.success ? allVendorsResult.data.data : [];
+  const similarVendors = findSimilarVendors(vendor, allVendors, allPerks, 4);
+
+  // Count perks per vendor for display
+  const perksCountMap = new Map<number, number>();
+  for (const perk of allPerks) {
+    perksCountMap.set(perk.vendor_id, (perksCountMap.get(perk.vendor_id) || 0) + 1);
+  }
 
   const employeeRange = formatEmployeeRange(vendor.employee_min, vendor.employee_max);
   const hasSocialLinks = vendor.linkedin || vendor.facebook || vendor.twitter;
@@ -409,6 +422,31 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
               </Card>
             )}
           </section>
+
+          {/* Similar Vendors Section - Only show if there are similar vendors */}
+          {similarVendors.length > 0 && (
+            <section aria-labelledby="similar-vendors-heading" className="pt-8 border-t border-slate-200">
+              <h3
+                id="similar-vendors-heading"
+                className="text-base font-semibold text-slate-700 mb-4"
+              >
+                Similar Vendors
+              </h3>
+              <p className="text-sm text-slate-500 mb-6">
+                Other vendors with similar services and industries
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {similarVendors.map((similarVendor) => (
+                  <VendorCard
+                    key={similarVendor.id}
+                    vendor={similarVendor}
+                    basePath="/admin/vendors"
+                    perksCount={perksCountMap.get(similarVendor.id) || 0}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Raw API Data - Collapsed by default */}
           <Disclosure trigger="See raw API data">
