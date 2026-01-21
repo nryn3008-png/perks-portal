@@ -242,10 +242,10 @@ function PerksPageContent() {
                   : 'text-slate-600 hover:text-slate-900'
               }`}
               aria-pressed={viewMode === 'grid'}
-              title="Grid view"
+              title="All perks"
             >
               <LayoutGrid className="h-4 w-4" />
-              <span className="hidden sm:inline">Grid</span>
+              <span className="hidden sm:inline">All perks</span>
             </button>
             <button
               type="button"
