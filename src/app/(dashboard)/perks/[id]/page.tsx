@@ -7,7 +7,7 @@ import {
   Mail,
   Info,
 } from 'lucide-react';
-import { Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
+import { Badge, Card, CardContent, Disclosure, LinkButton } from '@/components/ui';
 import { CopyButton, OfferCard } from '@/components/perks';
 import { perksService, vendorsService } from '@/lib/api';
 import { findSimilarPerks } from '@/lib/similarity';
