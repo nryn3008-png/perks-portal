@@ -396,6 +396,7 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
                     offer={perk}
                     vendorLogo={vendor.logo}
                     vendorName={vendor.name}
+                    vendorPrimaryService={vendor.primary_service}
                   />
                 ))}
               </div>

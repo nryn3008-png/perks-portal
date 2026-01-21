@@ -469,6 +469,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
                 offer={perk}
                 vendorLogo={vendor.logo}
                 vendorName={vendor.name}
+                vendorPrimaryService={vendor.primary_service}
               />
             ))}
           </div>

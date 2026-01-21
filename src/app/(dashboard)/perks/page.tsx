@@ -40,8 +40,8 @@ function PerksPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Vendor map state (vendorId → { logo, name })
-  const [vendorMap, setVendorMap] = useState<Record<number, { logo: string | null; name: string }>>({});
+  // Vendor map state (vendorId → { logo, name, primaryService })
+  const [vendorMap, setVendorMap] = useState<Record<number, { logo: string | null; name: string; primaryService?: string | null }>>({});
 
   // Totals state for header (from /api/perks/totals)
   const [totals, setTotals] = useState<{ totalOffers: number; totalSavings: string } | null>(null);
@@ -84,7 +84,7 @@ function PerksPageContent() {
     }
   }, []);
 
-  // Fetch all vendors and build vendor map (vendorId → { logo, name })
+  // Fetch all vendors and build vendor map (vendorId → { logo, name, primaryService })
   const fetchVendors = useCallback(async () => {
     try {
       // Fetch all vendors with a large page size to get all data at once
@@ -92,13 +92,14 @@ function PerksPageContent() {
       if (!res.ok) return;
       const data = await res.json();
 
-      // Build vendorId → { logo, name } map
-      const map: Record<number, { logo: string | null; name: string }> = {};
+      // Build vendorId → { logo, name, primaryService } map
+      const map: Record<number, { logo: string | null; name: string; primaryService?: string | null }> = {};
       for (const vendor of data.data || []) {
         if (vendor.id) {
           map[vendor.id] = {
             logo: vendor.logo || null,
             name: vendor.name || '',
+            primaryService: vendor.primary_service || null,
           };
         }
       }

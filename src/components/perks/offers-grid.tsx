@@ -10,7 +10,7 @@ import type { GetProvenDeal } from '@/types';
 
 interface OffersGridProps {
   offers: GetProvenDeal[];
-  vendorMap?: Record<number, { logo: string | null; name: string }>;  // vendorId → { logo, name }
+  vendorMap?: Record<number, { logo: string | null; name: string; primaryService?: string | null }>;
   isLoading?: boolean;
   emptyMessage?: string;
 }
@@ -56,6 +56,7 @@ export function OffersGrid({
             offer={offer}
             vendorLogo={vendor?.logo}
             vendorName={vendor?.name}
+            vendorPrimaryService={vendor?.primaryService}
           />
         );
       })}

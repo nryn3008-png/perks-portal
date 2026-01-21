@@ -33,8 +33,9 @@ import type { GetProvenDeal } from '@/types';
 
 interface OfferCardProps {
   offer: GetProvenDeal;
-  vendorLogo?: string | null;  // Logo from vendors API (takes precedence over offer.picture)
-  vendorName?: string;         // Vendor name from vendors API
+  vendorLogo?: string | null;           // Logo from vendors API (takes precedence over offer.picture)
+  vendorName?: string;                  // Vendor name from vendors API
+  vendorPrimaryService?: string | null; // Primary service from vendors API
   isLoading?: boolean;
 }
 
@@ -236,7 +237,7 @@ function OfferCardSkeleton() {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: OfferCardProps) {
+export function OfferCard({ offer, vendorLogo, vendorName, vendorPrimaryService, isLoading = false }: OfferCardProps) {
   // Loading state → Figma "loading" variant
   if (isLoading) {
     return <OfferCardSkeleton />;
@@ -294,9 +295,16 @@ export function OfferCard({ offer, vendorLogo, vendorName, isLoading = false }: 
           <div className="flex items-center gap-4">
             <VendorLogo src={picture} />
             {vendorName && (
-              <p className="min-w-0 flex-1 truncate text-base font-bold leading-[22px] text-[#3d445a]">
-                {vendorName}
-              </p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-bold leading-[22px] text-[#3d445a]">
+                  {vendorName}
+                </p>
+                {vendorPrimaryService && (
+                  <p className="truncate text-xs leading-[18px] tracking-[0.4px] text-[#81879c]">
+                    {vendorPrimaryService}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>
