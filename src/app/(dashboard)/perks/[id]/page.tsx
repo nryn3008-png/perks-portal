@@ -498,16 +498,13 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
       {/* Similar Perks Section - Perks from OTHER vendors with similar attributes */}
       {similarPerks.length > 0 && (
         <section aria-labelledby="similar-perks-heading" className="mt-12 pt-8 border-t border-slate-200">
-          <h3
+          <h2
             id="similar-perks-heading"
-            className="text-base font-semibold text-slate-700 mb-4"
+            className="text-lg font-semibold text-slate-900 mb-6"
           >
             Similar Perks
-          </h3>
-          <p className="text-sm text-slate-500 mb-6">
-            Other offers you might find useful
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
+          </h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {similarPerks.map((perk) => {
               const perkVendor = vendorMap[perk.vendor_id];
               return (

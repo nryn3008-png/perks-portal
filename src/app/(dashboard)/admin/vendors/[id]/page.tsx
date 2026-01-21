@@ -426,16 +426,13 @@ export default async function AdminVendorDetailPage({ params }: AdminVendorDetai
           {/* Similar Vendors Section - Only show if there are similar vendors */}
           {similarVendors.length > 0 && (
             <section aria-labelledby="similar-vendors-heading" className="pt-8 border-t border-slate-200">
-              <h3
+              <h2
                 id="similar-vendors-heading"
-                className="text-base font-semibold text-slate-700 mb-4"
+                className="text-lg font-semibold text-slate-900 mb-4"
               >
                 Similar Vendors
-              </h3>
-              <p className="text-sm text-slate-500 mb-6">
-                Other vendors with similar services and industries
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
+              </h2>
+              <div className="grid gap-6 sm:grid-cols-2">
                 {similarVendors.map((similarVendor) => (
                   <VendorCard
                     key={similarVendor.id}
