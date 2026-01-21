@@ -91,6 +91,7 @@ function getDealTypeLabel(dealType: string | null): string {
 
 /**
  * Color Label Badge - matches OfferCard ColorLabels component
+ * Used for investment levels and other small tags
  */
 function ColorLabel({
   text,
@@ -111,6 +112,48 @@ function ColorLabel({
     >
       {text}
     </span>
+  );
+}
+
+/**
+ * Value Metric Card - larger, more impactful display for offer values
+ * Used for discount and estimated value metrics
+ */
+function ValueMetricCard({
+  label,
+  value,
+  variant,
+}: {
+  label: string;
+  value: string;
+  variant: 'green' | 'blue';
+}) {
+  const styles = {
+    green: {
+      bg: 'bg-[#e7f6ea]',
+      border: 'border-[#dbf1e0]',
+      label: 'text-[#005f15]',
+      value: 'text-[#005f15]',
+    },
+    blue: {
+      bg: 'bg-[#eef4ff]',
+      border: 'border-[#e6eeff]',
+      label: 'text-[#0036d7]',
+      value: 'text-[#0036d7]',
+    },
+  };
+
+  const s = styles[variant];
+
+  return (
+    <div className={`flex-1 min-w-[140px] rounded-xl border ${s.bg} ${s.border} p-4`}>
+      <p className={`text-xs font-semibold uppercase tracking-[0.4px] ${s.label} mb-1`}>
+        {label}
+      </p>
+      <p className={`text-2xl font-bold ${s.value}`}>
+        {value}
+      </p>
+    </div>
   );
 }
 
@@ -253,35 +296,6 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               {offer.name}
             </h1>
 
-            {/* Value badges row - matches OfferCard pattern */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Discount badge (green) */}
-              {discountDisplay && (
-                <ColorLabel text={discountDisplay} color="green" />
-              )}
-
-              {/* Estimated value badge (blue) */}
-              {formatEstimatedValueBadge(offer.estimated_value) && (
-                <ColorLabel text={formatEstimatedValueBadge(offer.estimated_value)!} color="blue" />
-              )}
-
-              {/* Price comparison */}
-              {(offer.old_price || offer.new_price) && (
-                <div className="flex items-center gap-2">
-                  {offer.old_price && (
-                    <span className="text-sm text-[#81879c] line-through">
-                      ${offer.old_price.toLocaleString()}
-                    </span>
-                  )}
-                  {offer.new_price && (
-                    <span className="text-sm font-semibold text-[#3d445a]">
-                      ${offer.new_price.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Investment levels row */}
             {offer.investment_levels.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
@@ -291,6 +305,50 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
               </div>
             )}
           </header>
+
+          {/* Value Metric Cards - side by side on desktop, stacked on mobile */}
+          {(discountDisplay || offer.estimated_value || offer.old_price || offer.new_price) && (
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Discount metric card */}
+              {discountDisplay && (
+                <ValueMetricCard
+                  label="Discount"
+                  value={discountDisplay}
+                  variant="green"
+                />
+              )}
+
+              {/* Estimated value metric card */}
+              {offer.estimated_value && offer.estimated_value > 0 && (
+                <ValueMetricCard
+                  label="Estimated Value"
+                  value={formatValue(offer.estimated_value)}
+                  variant="blue"
+                />
+              )}
+
+              {/* Price comparison metric card */}
+              {(offer.old_price || offer.new_price) && (
+                <div className="flex-1 min-w-[140px] rounded-xl border bg-[#f9f9fa] border-[#ecedf0] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.4px] text-[#81879c] mb-1">
+                    Price
+                  </p>
+                  <div className="flex items-baseline gap-2">
+                    {offer.old_price && (
+                      <span className="text-lg text-[#81879c] line-through">
+                        ${offer.old_price.toLocaleString()}
+                      </span>
+                    )}
+                    {offer.new_price && (
+                      <span className="text-2xl font-bold text-[#3d445a]">
+                        ${offer.new_price.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description Section */}
           {offer.description && (
