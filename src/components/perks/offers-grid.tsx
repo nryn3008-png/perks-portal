@@ -59,7 +59,7 @@ export function OffersGrid({
 
     // Convert to array with vendor info, sorted by vendor name
     const groups: VendorGroupData[] = [];
-    for (const [vendorId, vendorOffers] of groupMap) {
+    for (const [vendorId, vendorOffers] of Array.from(groupMap.entries())) {
       const vendorInfo = vendorMap[vendorId];
       groups.push({
         vendorId,
