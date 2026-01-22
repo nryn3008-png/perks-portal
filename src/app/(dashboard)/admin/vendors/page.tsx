@@ -398,24 +398,35 @@ function AdminVendorsPageContent() {
       </div>
 
       {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Vendors Management</h1>
-          <p className="text-slate-600">
-            View and manage vendor information
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Vendors Management</h1>
+        <p className="text-slate-600">
+          View and manage vendor information
+        </p>
+      </div>
+
+      {/* Search Bar with View Toggle and Filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Search Bar - filters as you type */}
+        <SearchInput
+          className="flex-1"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onClear={clearSearch}
+          placeholder="Search vendors..."
+          aria-label="Search vendors"
+        />
 
         <div className="flex items-center gap-3">
-          {/* View Mode Toggle - Figma segmented pill toggle (node 4805-2967) */}
-          <div className="inline-flex rounded-full border border-slate-200 bg-white p-0.5">
+          {/* View Mode Toggle */}
+          <div className="flex rounded-full border border-slate-200 bg-white p-1">
             <button
               type="button"
               onClick={() => setViewMode('card')}
-              className={`flex items-center justify-center px-2.5 py-1.5 rounded-full transition-colors ${
+              className={`flex items-center justify-center rounded-full px-3 py-1.5 transition-colors ${
                 viewMode === 'card'
                   ? 'bg-[#0038ff] text-white'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
               aria-label="Card view"
               aria-pressed={viewMode === 'card'}
@@ -425,10 +436,10 @@ function AdminVendorsPageContent() {
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              className={`flex items-center justify-center px-2.5 py-1.5 rounded-full transition-colors ${
+              className={`flex items-center justify-center rounded-full px-3 py-1.5 transition-colors ${
                 viewMode === 'table'
                   ? 'bg-[#0038ff] text-white'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
               aria-label="Table view"
               aria-pressed={viewMode === 'table'}
@@ -454,15 +465,6 @@ function AdminVendorsPageContent() {
           )}
         </div>
       </div>
-
-      {/* Search Bar - filters as you type */}
-      <SearchInput
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-        onClear={clearSearch}
-        placeholder="Search vendors..."
-        aria-label="Search vendors"
-      />
 
       {/* Filters Panel */}
       {showFilters && hasFilterOptions && (

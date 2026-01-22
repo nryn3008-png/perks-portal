@@ -211,23 +211,34 @@ function PerksPageContent() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">All Perks for Your Startup</h1>
-          <p className="text-slate-600">
-            {totals ? (
-              <>
-                Access {totals.totalOffers}+ exclusive offers from trusted partners
-                {totals.totalSavings && totals.totalSavings !== 'No data' && (
-                  <>, worth over {totals.totalSavings} in total savings for your portfolio companies</>
-                )}
-                .
-              </>
-            ) : (
-              'Access exclusive offers from trusted partners for your portfolio companies.'
-            )}
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">All Perks for Your Startup</h1>
+        <p className="text-slate-600">
+          {totals ? (
+            <>
+              Access {totals.totalOffers}+ exclusive offers from trusted partners
+              {totals.totalSavings && totals.totalSavings !== 'No data' && (
+                <>, worth over {totals.totalSavings} in total savings for your portfolio companies</>
+              )}
+              .
+            </>
+          ) : (
+            'Access exclusive offers from trusted partners for your portfolio companies.'
+          )}
+        </p>
+      </div>
+
+      {/* Search Input with View Toggle and Filter */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Search Input - filters by vendor name */}
+        <SearchInput
+          className="flex-1"
+          placeholder="Search by vendor name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery('')}
+          aria-label="Search perks by vendor name"
+        />
 
         {/* View toggle and Filter buttons */}
         <div className="flex items-center gap-2">
@@ -280,15 +291,6 @@ function PerksPageContent() {
           )}
         </div>
       </div>
-
-      {/* Search Input - filters by vendor name */}
-      <SearchInput
-        placeholder="Search by vendor name..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        onClear={() => setSearchQuery('')}
-        aria-label="Search perks by vendor name"
-      />
 
       {/* Filters Panel */}
       {showFilters && hasFilterOptions && (
