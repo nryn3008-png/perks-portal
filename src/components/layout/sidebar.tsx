@@ -4,6 +4,10 @@
  * Sidebar component
  * Main navigation sidebar for the application
  *
+ * Responsive behavior:
+ * - Mobile: Slides in as overlay with backdrop (triggered by hamburger menu)
+ * - Desktop: Fixed sidebar
+ *
  * Includes:
  * - Bridge logo (primary) - links to https://brdg.app/home/
  * - Navigation links
@@ -19,6 +23,7 @@ import {
   Building2,
   Shield,
   UserCheck,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAVIGATION } from '@/lib/constants';
@@ -43,9 +48,11 @@ interface SidebarProps {
     email: string;
     avatarUrl?: string;
   };
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-export function Sidebar({ isAdmin = false, user }: SidebarProps) {
+export function Sidebar({ isAdmin = false, user, isMobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -53,140 +60,182 @@ export function Sidebar({ isAdmin = false, user }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
+  const handleLinkClick = () => {
+    // Close mobile menu when a link is clicked
+    if (onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white">
-      {/* Bridge Logo - Primary Branding */}
-      <div className="flex h-16 items-center border-b border-slate-200 px-6">
-        <a
-          href={BRIDGE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-          aria-label="Bridge - Opens in new tab"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logos/bridge-logo.svg"
-            alt="Bridge"
-            className="h-[18px] w-auto"
-          />
-        </a>
-      </div>
+    <>
+      {/* Mobile backdrop */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Navigation */}
-      <nav className="flex flex-col gap-1 p-4">
-        {/* Main Navigation */}
-        <div className="mb-2">
-          <span className="px-3 text-xs font-medium uppercase tracking-wider text-slate-400">
-            Browse
-          </span>
-        </div>
-
-        {NAVIGATION.main.map((item) => {
-          const Icon = iconMap[item.icon];
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-4 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                isActive(item.href)
-                  ? 'bg-brand-50 text-brand-700'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              )}
-            >
-              {Icon && <Icon className="h-5 w-5" />}
-              {item.name}
-            </Link>
-          );
-        })}
-
-        {/* Admin Navigation - Only shown for admin users */}
-        {isAdmin && (
-          <>
-            <div className="mb-2 mt-6">
-              <span className="px-3 text-xs font-medium uppercase tracking-wider text-slate-400">
-                Admin
-              </span>
-            </div>
-
-            {NAVIGATION.admin.map((item) => {
-              const Icon = iconMap[item.icon];
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-4 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isActive(item.href)
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  )}
-                >
-                  {Icon && <Icon className="h-5 w-5" />}
-                  {item.name}
-                </Link>
-              );
-            })}
-          </>
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-50 h-screen w-64 border-r border-slate-200 bg-white transition-transform duration-300 ease-in-out',
+          // Mobile: hidden by default, slides in when open
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: always visible
+          'md:translate-x-0 md:z-40'
         )}
-      </nav>
-
-      {/* Bottom Section */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-slate-50/50">
-        {/* User Identity */}
-        {user && (
-          <div className="flex items-center gap-3 px-4 py-3">
-            {user.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.avatarUrl}
-                alt={user.name}
-                className="h-8 w-8 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-medium text-brand-700">
-                {user.name?.charAt(0) || 'U'}
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">
-                {user.name}
-              </p>
-              {user.email && (
-                <p className="text-xs text-slate-500 truncate">
-                  {user.email}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* API Status */}
-        <div className="flex items-center justify-between px-4 py-2">
-          <span className="text-xs text-slate-400">Status</span>
-          <ApiStatusChip isAdmin={isAdmin} />
-        </div>
-
-        {/* Powered by GetProven - Attribution */}
-        <div className="px-4 py-3">
+      >
+        {/* Header with logo and close button */}
+        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
           <a
-            href={GETPROVEN_URL}
+            href={BRIDGE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 rounded-md py-1 text-xs text-slate-400 transition-colors hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-            aria-label="Powered by GetProven - Opens in new tab"
+            className="rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            aria-label="Bridge - Opens in new tab"
           >
-            <span>Powered by</span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logos/getproven-logo.png"
-              alt="GetProven"
-              className="h-2 w-auto"
+              src="/logos/bridge-logo.svg"
+              alt="Bridge"
+              className="h-[18px] w-auto"
             />
           </a>
+          {/* Mobile close button */}
+          <button
+            type="button"
+            onClick={onMobileClose}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 md:hidden"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      </div>
-    </aside>
+
+        {/* Navigation */}
+        <nav className="flex flex-col gap-1 p-4">
+          {/* Main Navigation */}
+          <div className="mb-2">
+            <span className="px-3 text-xs font-medium uppercase tracking-wider text-slate-400">
+              Browse
+            </span>
+          </div>
+
+          {NAVIGATION.main.map((item) => {
+            const Icon = iconMap[item.icon];
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={handleLinkClick}
+                className={cn(
+                  'flex items-center gap-4 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  // Larger touch target on mobile
+                  'min-h-[44px]',
+                  isActive(item.href)
+                    ? 'bg-brand-50 text-brand-700'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                )}
+              >
+                {Icon && <Icon className="h-5 w-5" />}
+                {item.name}
+              </Link>
+            );
+          })}
+
+          {/* Admin Navigation - Only shown for admin users */}
+          {isAdmin && (
+            <>
+              <div className="mb-2 mt-6">
+                <span className="px-3 text-xs font-medium uppercase tracking-wider text-slate-400">
+                  Admin
+                </span>
+              </div>
+
+              {NAVIGATION.admin.map((item) => {
+                const Icon = iconMap[item.icon];
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={handleLinkClick}
+                    className={cn(
+                      'flex items-center gap-4 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      // Larger touch target on mobile
+                      'min-h-[44px]',
+                      isActive(item.href)
+                        ? 'bg-brand-50 text-brand-700'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    )}
+                  >
+                    {Icon && <Icon className="h-5 w-5" />}
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </>
+          )}
+        </nav>
+
+        {/* Bottom Section */}
+        <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-slate-50/50">
+          {/* User Identity */}
+          {user && (
+            <div className="flex items-center gap-3 px-4 py-3">
+              {user.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-medium text-brand-700">
+                  {user.name?.charAt(0) || 'U'}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">
+                  {user.name}
+                </p>
+                {user.email && (
+                  <p className="text-xs text-slate-500 truncate">
+                    {user.email}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* API Status */}
+          <div className="flex items-center justify-between px-4 py-2">
+            <span className="text-xs text-slate-400">Status</span>
+            <ApiStatusChip isAdmin={isAdmin} />
+          </div>
+
+          {/* Powered by GetProven - Attribution */}
+          <div className="px-4 py-3">
+            <a
+              href={GETPROVEN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-md py-1 text-xs text-slate-400 transition-colors hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+              aria-label="Powered by GetProven - Opens in new tab"
+            >
+              <span>Powered by</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logos/getproven-logo.png"
+                alt="GetProven"
+                className="h-2 w-auto"
+              />
+            </a>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

@@ -146,7 +146,7 @@ function ValueMetricCard({
   const s = styles[variant];
 
   return (
-    <div className={`flex-1 min-w-[140px] rounded-xl border ${s.bg} ${s.border} p-4`}>
+    <div className={`flex-1 min-w-0 sm:min-w-[140px] rounded-xl border ${s.bg} ${s.border} p-4`}>
       <p className={`text-xs font-semibold uppercase tracking-[0.4px] ${s.label} mb-1`}>
         {label}
       </p>
@@ -240,7 +240,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
       {/* Back navigation */}
       <Link
         href="/perks"
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
+        className="mb-6 md:mb-8 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-md px-1 -ml-1"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to Perks
@@ -329,7 +329,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
 
               {/* Price comparison metric card */}
               {(offer.old_price || offer.new_price) && (
-                <div className="flex-1 min-w-[140px] rounded-xl border bg-[#f9f9fa] border-[#ecedf0] p-4">
+                <div className="flex-1 min-w-0 sm:min-w-[140px] rounded-xl border bg-[#f9f9fa] border-[#ecedf0] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.4px] text-[#81879c] mb-1">
                     Price
                   </p>
@@ -423,7 +423,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
 
         {/* Redemption Sidebar */}
         <aside className="lg:col-span-1">
-          <Card className="sticky top-24 border-slate-200 shadow-sm">
+          <Card className="lg:sticky lg:top-6 border-slate-200 shadow-sm">
             <CardContent className="p-0">
               {/* Card header */}
               <div className="p-6 pb-4 border-b border-slate-100">

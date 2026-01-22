@@ -103,10 +103,10 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const sizes: Record<ButtonSize, string> = {
-  // Small: 16px horizontal, 8px vertical per DESIGN_SYSTEM.md
-  sm: 'px-4 py-2 text-sm',
+  // Small: 16px horizontal, 8px vertical per DESIGN_SYSTEM.md, min-h-[44px] for touch targets
+  sm: 'px-4 py-2 text-sm min-h-[44px]',
   // Large: 24px horizontal, 12px vertical (exception for hero CTAs)
-  lg: 'px-6 py-3 text-base',
+  lg: 'px-6 py-3 text-base min-h-[48px]',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

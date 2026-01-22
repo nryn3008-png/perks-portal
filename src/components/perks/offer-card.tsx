@@ -382,9 +382,9 @@ export function OfferCard({ offer, vendorLogo, vendorName, vendorPrimaryService,
 
         {/* ═══════════════════════════════════════════════════════════════════
             FOOTER (Feed item actions) - Figma node: Feed item actions
-            Pinned to bottom via flex layout
+            Pinned to bottom via flex layout, 44px min-height for touch targets
             ═══════════════════════════════════════════════════════════════════ */}
-        <div className="border-t border-[#f2f3f5] bg-white p-4">
+        <div className="flex items-center min-h-[44px] border-t border-[#f2f3f5] bg-white px-4 py-3">
           <span className="text-sm font-semibold leading-6 tracking-[0.4px] text-[#0038ff]">
             View offer
           </span>
