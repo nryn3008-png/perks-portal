@@ -4,14 +4,12 @@
  * Admin Vendors Page
  *
  * ADMIN ONLY: Manage vendors via GetProven API
- * - Fetches from /vendors/ with page and page_size
- * - Load more using API-provided 'next' URL
- * - Stop fetching when next is null
+ * - Fetches all vendors at once for complete search coverage
  * - Filter by search, service_name, group_name
  */
 
 import { Suspense, useEffect, useState, useCallback } from 'react';
-import { AlertCircle, Loader2, Filter, X, Shield, LayoutGrid, List, Building2, Gift, Users, Calendar } from 'lucide-react';
+import { AlertCircle, Filter, X, Shield, LayoutGrid, List, Building2, Gift, Users, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button, Card, SearchInput } from '@/components/ui';
@@ -20,7 +18,7 @@ import type { GetProvenVendor } from '@/types';
 
 type ViewMode = 'card' | 'table';
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 1000;
 
 interface FilterOptions {
   services: string[];
@@ -233,10 +231,7 @@ function AdminVendorsPageContent() {
   // Data state
   const [vendors, setVendors] = useState<GetProvenVendor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
-  const [nextUrl, setNextUrl] = useState<string | null>(null);
   const [perksCountMap, setPerksCountMap] = useState<Record<number, number>>({});
 
   // Filter state
@@ -285,59 +280,37 @@ function AdminVendorsPageContent() {
     }
   }, []);
 
-  // Fetch vendors with "Load more" pattern
-  const fetchVendors = useCallback(async (loadMore = false) => {
-    if (loadMore) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-      setError(null);
-    }
+  // Fetch all vendors at once for complete search coverage
+  const fetchVendors = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      let url: string;
+      const params = new URLSearchParams();
+      params.set('page', '1');
+      params.set('page_size', String(PAGE_SIZE));
 
-      if (loadMore && nextUrl) {
-        // Use API-provided next URL
-        url = `/api/vendors?next=${encodeURIComponent(nextUrl)}`;
-      } else {
-        // Initial fetch with page and page_size
-        const params = new URLSearchParams();
-        params.set('page', '1');
-        params.set('page_size', String(PAGE_SIZE));
-
-        if (activeFilters.serviceName) {
-          params.set('service_name', activeFilters.serviceName);
-        }
-        if (activeFilters.groupName) {
-          params.set('group_name', activeFilters.groupName);
-        }
-
-        url = `/api/vendors?${params.toString()}`;
+      if (activeFilters.serviceName) {
+        params.set('service_name', activeFilters.serviceName);
+      }
+      if (activeFilters.groupName) {
+        params.set('group_name', activeFilters.groupName);
       }
 
+      const url = `/api/vendors?${params.toString()}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch vendors');
 
       const data = await res.json();
-
-      if (loadMore) {
-        setVendors((prev) => [...prev, ...(data.data || [])]);
-      } else {
-        setVendors(data.data || []);
-        setTotalCount(data.pagination?.count || 0);
-      }
-
-      setNextUrl(data.pagination?.next || null);
+      setVendors(data.data || []);
     } catch (err) {
       console.error('Vendors fetch error:', err);
       setError('Unable to load vendors. Please try again.');
-      if (!loadMore) setVendors([]);
+      setVendors([]);
     } finally {
       setIsLoading(false);
-      setIsLoadingMore(false);
     }
-  }, [nextUrl, activeFilters]);
+  }, [activeFilters]);
 
   // Initial fetch
   useEffect(() => {
@@ -347,10 +320,8 @@ function AdminVendorsPageContent() {
 
   // Fetch vendors when filters change
   useEffect(() => {
-    setVendors([]);
-    setNextUrl(null);
-    fetchVendors(false);
-  }, [activeFilters]);
+    fetchVendors();
+  }, [fetchVendors]);
 
   // Clear search (client-side only)
   const clearSearch = () => {
@@ -553,7 +524,7 @@ function AdminVendorsPageContent() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fetchVendors(false)}
+            onClick={() => fetchVendors()}
             className="ml-auto text-red-700 hover:bg-red-100"
           >
             Retry
@@ -568,8 +539,8 @@ function AdminVendorsPageContent() {
           {isLoading
             ? 'Loading vendors...'
             : isSearchActive
-            ? `${finalVendors.length} ${finalVendors.length === 1 ? 'vendor' : 'vendors'} matching "${searchInput}"`
-            : `${totalCount} ${totalCount === 1 ? 'vendor' : 'vendors'} found`}
+            ? `${finalVendors.length} of ${vendors.length} ${vendors.length === 1 ? 'vendor' : 'vendors'} matching "${searchInput}"`
+            : `${vendors.length} ${vendors.length === 1 ? 'vendor' : 'vendors'} found`}
         </p>
 
         {/* Vendors Grid or Table */}
@@ -591,31 +562,8 @@ function AdminVendorsPageContent() {
           />
         )}
 
-        {/* Load More Button */}
-        {nextUrl && !isLoading && (
-          <div className="flex flex-col items-center gap-2 border-t border-slate-200 pt-6 mt-6">
-            <p className="text-sm text-slate-500">
-              Showing {vendors.length} of {totalCount} vendors
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => fetchVendors(true)}
-              disabled={isLoadingMore}
-            >
-              {isLoadingMore ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Load more'
-              )}
-            </Button>
-          </div>
-        )}
-
         {/* All loaded message */}
-        {!nextUrl && !isLoading && vendors.length > 0 && (
+        {!isLoading && vendors.length > 0 && !isSearchActive && (
           <div className="flex justify-center border-t border-slate-200 pt-6 mt-6">
             <p className="text-sm text-slate-500">
               Showing all {vendors.length} vendors
